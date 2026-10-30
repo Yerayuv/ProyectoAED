@@ -51,22 +51,31 @@ library(skimr)
 
 # Introducción
 
-The introduction should briefly place the study in a broad context and
-highlight why it is important. It should define the purpose of the work
-and its significance. The current state of the research field should be
-reviewed carefully and key publications cited. Please highlight
-controversial and diverging hypotheses when necessary. Finally, briefly
-mention the main aim of the work and highlight the principal
-conclusions. As far as possible, please keep the introduction
-comprehensible to scientists outside your particular field of research.
-Citing a journal paper [@bertrand-krajewski_distribution_1998;
-@leutnant_stormwater_2016]. And now citing a book reference
-@gujer_systems_2008. Some MDPI journals use Chicago and others use APA,
-this template should choose the correct citation format for you once you
-specify the journal in the YAML header.
+Las enfermedades cardiovasculares representan una de las principales
+causas de mortalidad a nivel global. Según la Organización Mundial de la
+Salud (OMS), estas patologías son responsables de aproximadamente un 32%
+de todas las muertes en el mundo [@who_cardiovascular]. Por tanto,
+lograr identificar de forma precoz a los pacientes susceptibles de
+padecerlas puede salvar multitud de vidas, especialmente considerando
+que el diagnóstico de estas enfermedades suele producirse en fases
+avanzadas.
 
-To use endnotes, change `endnotes: true` in the YAML header, then use
-`\endnote{This is an endnote.}`.
+El objetivo principal de este estudio es analizar los datos procedentes
+de la encuesta epidemiológica anual del *Centers for Disease Control and
+Prevention* (CDC), procesados y disponibles en Kaggle
+[@pytlak_heart_disease], para establecer relaciones entre diversas
+variables explicativas y la aparición de cardiopatías. El conjunto de
+datos está compuesto por 40 variables, incluyendo datos demográficos,
+hábitos de vida y la presencia de otras patologías secundarias, junto
+con una variable objetivo binaria que indica la presencia de enfermedad
+cardíaca. Al disponer de una muestra amplia de aproximadamente 246.000
+observaciones, se cuenta con una base sólida para trabajar sobre los
+datos de forma robusta.
+
+El análisis exploratorio de datos (EDA) consistirá en un primer
+preprocesamiento y limpieza de los datos (tratamiento de valores
+perdidos y tipado de variables), seguido de un análisis mediante la
+visualización de relaciones entre variables con gráficos estadísticos.
 
 # Métodos y Materiales
 
