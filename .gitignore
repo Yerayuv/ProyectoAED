@@ -5,3 +5,4 @@
 *.log
 *_files/
 *.tex
+.data/
