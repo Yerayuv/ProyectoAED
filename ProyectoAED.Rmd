@@ -77,6 +77,17 @@ preprocesamiento y limpieza de los datos (tratamiento de valores
 perdidos y tipado de variables), seguido de un análisis mediante la
 visualización de relaciones entre variables con gráficos estadísticos.
 
+A partir de este conjunto de datos, el presente análisis se articula en torno
+a la siguiente pregunta principal de investigación:
+
+¿Existe una relación directa entre los hábitos de vida, las 
+características sociodemográficas y la presencia de patologías previas u otras 
+variables con el riesgo de padecer enfermedades cardiovasculares?
+
+El análisis exploratorio buscará identificar cuáles de estas variables 
+muestran una mayor asociación con las cardiopatías, cómo interactúan entre sí 
+y qué patrones o perfiles de pacientes presentan una mayor vulnerabilidad.
+
 # Métodos y Materiales
 
 Materials and Methods should be described with sufficient details to
