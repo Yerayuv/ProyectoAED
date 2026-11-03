@@ -42,11 +42,19 @@ knitr::opts_chunk$set(
   message = FALSE,   
   fig.align = "center", 
   fig.width = 7,      
-  fig.height = 4.5    
+  fig.height = 4.5,
+  dpi = 150
 )
 
-library(tidyverse)
-library(skimr)
+# Carga de paquetes
+
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(
+  knitr,        # Formateo de tablas
+  kableExtra,   # Personalización avanzada de tablas
+  tidyverse,    # Manipulación (dplyr, tidyr, readr) y gráficos (ggplot2)
+  skimr         # Resúmenes estadísticos descriptivos
+)
 ```
 
 # Introducción
