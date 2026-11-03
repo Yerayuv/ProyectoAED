@@ -476,6 +476,7 @@ kable(tabla_outliers, caption = "Comparativa de métodos de detección de outlie
 **Tratamiento de los outliers identificados:** Estos valores de IMC no representan errores de medición o transcripción (ya fueron filtrados antes), sino observaciones biológicamente reales correspondientes a pacientes con obesidad mórbida (grado III). Por tanto, no se eliminan del conjunto de datos, sino que se conservan para ser analizados mediante procedimientos y estadísticos en los siguientes bloques.
 
 
+
 ## Representación Gráfica de Outliers por Método
 
 Se representan gráficamente los valores de IMC frente a los métodos de detección empleados, mostrando los datos catalogados como típicos y los catalogados como outliers en distinto color.
@@ -512,6 +513,43 @@ El gráfico refleja de manera visual la sensibilidad de cada método.
 **Continuidad de los datos:** Se observa que los valores superiores no son puntos aislados ni errores tipográficos, sino una nube continua que se extiende hasta valores extremos, confirmando que se trata de individuos con obesidad severa real que deben conservarse en la muestra.
 
 * **Comparativa de cortes:** La regla 3 Sigma deja una franja alta de puntos clasificados como normales (debido a la varianza inflada), mientras que la regla del Boxplot y el identificador Hampel capturan de forma equilibrada la masa de valores atípicos.
+
+
+## Imputación de Variables Numéricas
+
+Para garantizar la integridad de los análisis cuantitativos posteriores sin introducir sesgos artificiales, se aplica una imputación según la naturaleza de cada variable:
+
+**Variables AlturaMetros, PesoKilogramos, IMC:** Hombres y mujeres siguen distribuciones distintas. Imputamos los valores perdidos directamente por la media según el Sexo del paciente.
+
+**Variables de descanso y salud percibida (`HorasSueno`, `DiasMalaSaludFisica`, `DiasMalaSaludMental`):** Al concentrarse en valores típicos (7 horas de sueño y 0 días de enfermedad), se imputan mediante su mediana.
+```{r imputacion_datos}
+# Imputación de medidas por Sexoç
+
+heart_data <- heart_data %>%
+  group_by(Sexo) %>%
+  mutate(
+    AlturaMetros   = ifelse(is.na(AlturaMetros), mean(AlturaMetros, na.rm = TRUE), AlturaMetros),
+    PesoKilogramos = ifelse(is.na(PesoKilogramos), mean(PesoKilogramos, na.rm = TRUE), PesoKilogramos),
+    IMC            = ifelse(is.na(IMC), mean(IMC, na.rm = TRUE), IMC)
+  ) %>%
+  ungroup()
+
+# Imputación de descanso y salud percibida por la mediana
+
+heart_data <- heart_data %>%
+  mutate(
+    HorasSueno          = ifelse(is.na(HorasSueno), median(HorasSueno, na.rm = TRUE), HorasSueno),
+    DiasMalaSaludFisica = ifelse(is.na(DiasMalaSaludFisica), median(DiasMalaSaludFisica, na.rm = TRUE), DiasMalaSaludFisica),
+    DiasMalaSaludMental = ifelse(is.na(DiasMalaSaludMental), median(DiasMalaSaludMental, na.rm = TRUE), DiasMalaSaludMental)
+  )
+# Comprobación final de NAs restantes en variables numéricas
+
+nas_numericas_final <- sapply(heart_data %>% select(where(is.numeric)), function(x) sum(is.na(x)))
+print("NAs restantes en variables numéricas tras la imputación:")
+print(nas_numericas_final)
+```
+Tras el proceso de imputación, todas las variables numéricas continuas y discretas del estudio quedan con cero valores perdidos, listas para el análisis bivariante y multivariante.
+
 
 # Resultados
 
