@@ -475,6 +475,44 @@ kable(tabla_outliers, caption = "Comparativa de métodos de detección de outlie
 
 **Tratamiento de los outliers identificados:** Estos valores de IMC no representan errores de medición o transcripción (ya fueron filtrados antes), sino observaciones biológicamente reales correspondientes a pacientes con obesidad mórbida (grado III). Por tanto, no se eliminan del conjunto de datos, sino que se conservan para ser analizados mediante procedimientos y estadísticos en los siguientes bloques.
 
+
+## Representación Gráfica de Outliers por Método
+
+Se representan gráficamente los valores de IMC frente a los métodos de detección empleados, mostrando los datos catalogados como típicos y los catalogados como outliers en distinto color.
+
+Para evitar problemas de saturación visual en el gráfico debido al volumen de más de 400.000 observaciones, se utiliza una muestra aleatoria representativa de 5.000 observaciones con set.seed(123) y se aplica dispersión aleatoria con transparencia.
+
+```{r grafico_outliers, fig.cap="Detección de outliers en IMC según cada método implementado.\\label{fig:outliers_imc}"}
+# Preparación de datos
+set.seed(123)
+
+df_plot_outliers <- heart_outliers %>%
+  select(IMC, starts_with("IMC_")) %>%
+  filter(!is.na(IMC)) %>%
+  slice_sample(n = 5000) %>%
+  pivot_longer(
+    cols = starts_with("IMC_"),
+    names_to = "Metodo",
+    values_to = "Es_Outlier"
+  )
+
+# Gráfico de puntos con jitter
+ggplot(df_plot_outliers, aes(x = Metodo, y = IMC, color = Es_Outlier)) +
+  geom_point(position = "jitter", alpha = 0.4, size = 0.8) +
+  labs(
+    title = "Detección de Outliers en IMC por Método",
+    x = "Método de Detección",
+    y = "Índice de Masa Corporal (IMC)",
+    color = "Es Outlier"
+  )
+```
+
+El gráfico refleja de manera visual la sensibilidad de cada método.
+
+**Continuidad de los datos:** Se observa que los valores superiores no son puntos aislados ni errores tipográficos, sino una nube continua que se extiende hasta valores extremos, confirmando que se trata de individuos con obesidad severa real que deben conservarse en la muestra.
+
+* **Comparativa de cortes:** La regla 3 Sigma deja una franja alta de puntos clasificados como normales (debido a la varianza inflada), mientras que la regla del Boxplot y el identificador Hampel capturan de forma equilibrada la masa de valores atípicos.
+
 # Resultados
 
 This section may be divided by subheadings. It should provide a concise
