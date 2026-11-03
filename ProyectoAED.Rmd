@@ -85,51 +85,154 @@ preprocesamiento y limpieza de los datos (tratamiento de valores
 perdidos y tipado de variables), seguido de un análisis mediante la
 visualización de relaciones entre variables con gráficos estadísticos.
 
-A partir de este conjunto de datos, el presente análisis se articula en torno
-a la siguiente pregunta principal de investigación:
+A partir de este conjunto de datos, el presente análisis se articula en
+torno a la siguiente pregunta principal de investigación:
 
-¿Existe una relación directa entre los hábitos de vida, las 
-características sociodemográficas y la presencia de patologías previas u otras 
-variables con el riesgo de padecer enfermedades cardiovasculares?
+¿Existe una relación directa entre los hábitos de vida, las
+características sociodemográficas y la presencia de patologías previas u
+otras variables con el riesgo de padecer enfermedades cardiovasculares?
 
-El análisis exploratorio buscará identificar cuáles de estas variables 
-muestran una mayor asociación con las cardiopatías, cómo interactúan entre sí 
-y qué patrones o perfiles de pacientes presentan una mayor vulnerabilidad.
-
+El análisis exploratorio buscará identificar cuáles de estas variables
+muestran una mayor asociación con las cardiopatías, cómo interactúan
+entre sí y qué patrones o perfiles de pacientes presentan una mayor
+vulnerabilidad.
 
 # Métodos y Materiales
 
 ## Descripción del Conjunto de Datos y Procedencia
 
-El conjunto de datos analizado procede del Behavioral Risk Factor Surveillance System (BRFSS) correspondiente al año 2022, un sistema de encuestas telefónicas coordinado por los Centros para el Control y la Prevención de Enfermedades de los Estados Unidos. Esta base de datos recopila información anual de ciudadanos adultos no institucionalizados sobre hábitos de riesgo para la salud, condiciones médicas crónicas y uso de servicios preventivos.
+El conjunto de datos analizado procede del Behavioral Risk Factor
+Surveillance System (BRFSS) correspondiente al año 2022, un sistema de
+encuestas telefónicas coordinado por los Centros para el Control y la
+Prevención de Enfermedades de los Estados Unidos. Esta base de datos
+recopila información anual de ciudadanos adultos no institucionalizados
+sobre hábitos de riesgo para la salud, condiciones médicas crónicas y
+uso de servicios preventivos.
 
-El conjunto cuenta inicialmente con 445.132 observaciones y 40 variables que recogen mediciones biométricas continuas, variables sociodemográficas y antecedentes clínicos.
+El conjunto cuenta inicialmente con 445.132 observaciones y 40 variables
+que recogen mediciones biométricas continuas, variables
+sociodemográficas y antecedentes clínicos.
+
+## Diccionario de Variables
+
+Para facilitar la comprensión del estudio, las 40 variables se traducen
+al español y se describen a continuación según su naturaleza:
+
+**Variable Objetivo Derivada:** `EnfermedadCardiaca`: Presencia de
+patología cardiovascular (infarto de miocardio o angina de pecho).
+
+**Variables Sociodemográficas:** `Estado`: Estado de residencia en EE.
+UU. `Sexo`: Sexo biológico (*Female / Male*). `GrupoEdad`: Intervalo de
+edad en tramos de cinco años (de 18-24 a 80 o más). `RazaEtnia`:
+Identificación racial y étnica.
+
+**Medidas Antropométricas y Estado Físico:** `AlturaMetros`: Altura en
+metros. `PesoKilogramos`: Peso en kilogramos. `IMC`: Índice de masa
+corporal en $kg/m^2$. `SaludGeneral`: Autopercepción del estado general
+de salud (*Poor, Fair, Good, Very good, Excellent*).
+`DiasMalaSaludFisica`: Número de días con mala salud física en los
+últimos 30 días (0 a 30). `DiasMalaSaludMental`: Número de días con
+problemas de salud mental en los últimos 30 días (0 a 30).
+
+**Hábitos de Vida:** `HorasSueno`: Horas promedio de sueño en 24 horas.
+`ActividadFisica`: Realización de ejercicio físico en los últimos 30
+días (*Yes / No*). `EstadoFumador`: Frecuencia y hábito de consumo de
+tabaco convencional. `UsoCigarrilloElectronico`: Uso de cigarrillos
+electrónicos o vapeadores. `ConsumidorAlcohol`: Consumo habitual de
+bebidas alcohólicas (*Yes / No*).
+
+**Patologías y Limitaciones:** `InfartoMiocardio`, `AnginaPecho`,
+`Ictus`: Antecedentes de patología cardiovascular aguda. `Diabetes`,
+`Asma`, `EPOC`, `EnfermedadRenal`,`Artritis`, `CancerPiel`,
+`TrastornoDepresivo`: Diagnósticos médicos previos (*Yes / No*).
+`DientesExtraidos`: Piezas dentales permanentes extraídas (*None, 1 to
+5, 6 or more, All*). `DificultadAuditiva`,`DificultadVisual`,
+`DificultadConcentracion`,
+`DificultadCaminar`,`DificultadVestirseBanarse`,
+`DificultadTareasDiarias`: Dificultades funcionales y limitaciones en la
+vida diaria.
+
+**Atención Médica y Prevención:** `UltimoChequeoMedico`: Tiempo
+transcurrido desde la última revisión médica rutinaria.
+`TomografiaTorax`: Realización de escáner o TAC de tórax. `PruebaVIH`,
+`VacunaGripeUltimoAno`,`VacunaNeumococo`, `VacunaTetanos10Anos`: Pruebas
+preventivas e inmunizaciones. `ConductaAltoRiesgo`, `CovidPositivo`:
+Conductas de riesgo y diagnóstico positivo de COVID-19.
 
 ## Ingesta y Tipado de Variables
 
-La importación se realiza de forma reproducible a partir del archivo comprimido mediante la librería readr. Posteriormente, se convierten las variables cualitativas a factores nominales y ordinales, y se define la variable objetivo HeartDisease (definida como presencia de infarto de miocardio HadHeartAttack o angina de pecho HadAngina).
+La importación se realiza de forma reproducible a partir del archivo
+comprimido mediante la librería readr. Posteriormente, se convierten las
+variables cualitativas a factores nominales y ordinales, y se define la
+variable objetivo HeartDisease (definida como presencia de infarto de
+miocardio HadHeartAttack o angina de pecho HadAngina).
 
 ```{r carga_y_tipado}
 # Carga, puede tardar unos segundos
 heart_raw <- read_csv("data/heart_2022_with_nans.csv.gz")
 
-# Tipado de variables y creación de HeartDisease
+# Renombrado de variables a español
 heart_data <- heart_raw %>%
+  rename(
+    Estado = State,
+    Sexo = Sex,
+    SaludGeneral = GeneralHealth,
+    DiasMalaSaludFisica = PhysicalHealthDays,
+    DiasMalaSaludMental = MentalHealthDays,
+    UltimoChequeoMedico = LastCheckupTime,
+    ActividadFisica = PhysicalActivities,
+    HorasSueno = SleepHours,
+    DientesExtraidos = RemovedTeeth,
+    InfartoMiocardio = HadHeartAttack,
+    AnginaPecho = HadAngina,
+    Ictus = HadStroke,
+    Asma = HadAsthma,
+    CancerPiel = HadSkinCancer,
+    EPOC = HadCOPD,
+    TrastornoDepresivo = HadDepressiveDisorder,
+    EnfermedadRenal = HadKidneyDisease,
+    Artritis = HadArthritis,
+    Diabetes = HadDiabetes,
+    DificultadAuditiva = DeafOrHardOfHearing,
+    DificultadVisual = BlindOrVisionDifficulty,
+    DificultadConcentracion = DifficultyConcentrating,
+    DificultadCaminar = DifficultyWalking,
+    DificultadVestirseBanarse = DifficultyDressingBathing,
+    DificultadTareasDiarias = DifficultyErrands,
+    EstadoFumador = SmokerStatus,
+    UsoCigarrilloElectronico = ECigaretteUsage,
+    TomografiaTorax = ChestScan,
+    RazaEtnia = RaceEthnicityCategory,
+    GrupoEdad = AgeCategory,
+    AlturaMetros = HeightInMeters,
+    PesoKilogramos = WeightInKilograms,
+    IMC = BMI,
+    ConsumidorAlcohol = AlcoholDrinkers,
+    PruebaVIH = HIVTesting,
+    VacunaGripeUltimoAno = FluVaxLast12,
+    VacunaNeumococo = PneumoVaxEver,
+    VacunaTetanos10Anos = TetanusLast10Tdap,
+    ConductaAltoRiesgo = HighRiskLastYear,
+    CovidPositivo = CovidPos
+  )
+
+# Tipado de variables y creación de HeartDisease
+heart_data <- heart_data %>%
   mutate(
     # Variable objetivo combinada (Cardiopatía)
-    HeartDisease = factor(
-    if_else(HadHeartAttack == "Yes" | HadAngina == "Yes", "Yes", "No"), 
+    EnfermedadCardiaca = factor(
+    if_else(InfartoMiocardio == "Yes" | AnginaPecho == "Yes", "Yes", "No"), 
     levels = c("No", "Yes")),
     
     # Factores ordinales con jerarquía lógica
-    GeneralHealth = factor(
-      GeneralHealth,
+    SaludGeneral = factor(
+      SaludGeneral,
       levels = c("Poor", "Fair", "Good", "Very good", "Excellent"),
       ordered = TRUE
     ),
     
-    AgeCategory = factor(
-      AgeCategory,
+    GrupoEdad = factor(
+      GrupoEdad,
       levels = c(
         "Age 18 to 24", "Age 25 to 29", "Age 30 to 34", "Age 35 to 39",
         "Age 40 to 44", "Age 45 to 49", "Age 50 to 54", "Age 55 to 59",
@@ -139,8 +242,8 @@ heart_data <- heart_raw %>%
       ordered = TRUE
     ),
     
-    RemovedTeeth = factor(
-      RemovedTeeth,
+    DientesExtraidos = factor(
+      DientesExtraidos,
       levels = c("None", "1 to 5", "6 or more", "All"),
       ordered = TRUE
     ),
@@ -149,7 +252,7 @@ heart_data <- heart_raw %>%
     across(where(is.character), as.factor)
   )
 
-# 3. Resumen del dataset
+# Resumen del dataset
 tabla_resumen <- tibble(
   Métrica = c("Total de Observaciones (Filas)", "Variables Totales", 
               "Casos con Cardiopatía (Yes)", "Casos sin Cardiopatía (No)", 
@@ -157,9 +260,9 @@ tabla_resumen <- tibble(
   Valor = c(
     nrow(heart_data),
     as.character(ncol(heart_data)),
-    sum(heart_data$HeartDisease == "Yes", na.rm = TRUE),
-    sum(heart_data$HeartDisease == "No", na.rm = TRUE),
-    paste(round(mean(heart_data$HeartDisease == "Yes", na.rm = TRUE) * 100, 2), " %")
+    sum(heart_data$EnfermedadCardiaca == "Yes", na.rm = TRUE),
+    sum(heart_data$EnfermedadCardiaca == "No", na.rm = TRUE),
+    paste(round(mean(heart_data$EnfermedadCardiaca == "Yes", na.rm = TRUE) * 100, 2), " %")
   )
 )
 
@@ -168,7 +271,9 @@ kable(tabla_resumen, caption = "Dimensiones iniciales y porcentaje de cardiopat�
 
 ## Detección y Corrección de Inconsistencias
 
-Siguiendo con el análisis exploratorio se analiza la presencia de valores especiales, valores numéricos imposibles para las variables y la consistencia entre el índice de masa corporal, el peso y la altura.
+Siguiendo con el análisis exploratorio se analiza la presencia de
+valores especiales, valores numéricos imposibles para las variables y la
+consistencia entre el índice de masa corporal, el peso y la altura.
 
 ```{r deteccion_inconsistencias}
 #Comprobación de valores especiales
@@ -182,8 +287,8 @@ menores_iguales_cero <- sapply(heart_data %>% select(where(is.numeric)), functio
 print("Valores <= 0 por variable:")
 print(menores_iguales_cero)
 
-#En PhysicalHealthDays y en MentalHealthDays sí tiene sentido encontrar iguales
-#a 0
+#En DiasMalaSaludFisica y en DiasMalaSaludMental sí tiene sentido encontrar 
+#iguales a 0
 
 # Calculamos la diferencia entre el BMI registrado y el calculado
 
@@ -192,8 +297,8 @@ print(menores_iguales_cero)
 # a metros y kilogramos se acumulan errores de redondeo de hasta +-1.2 puntos.
 # Una diferencia superior a 1.5 indica un error real de incoherencia.
 
-bmi_calculado <- heart_data$WeightInKilograms / (heart_data$HeightInMeters^2)
-diferencia_bmi <- abs(heart_data$BMI - bmi_calculado)
+bmi_calculado <- heart_data$PesoKilogramos / (heart_data$AlturaMetros^2)
+diferencia_bmi <- abs(heart_data$IMC - bmi_calculado)
 inconsistencias_bmi <- sum(diferencia_bmi > 1.5, na.rm = TRUE)
 
 print(paste("Número de registros con BMI inconsistente respecto a peso/altura:", inconsistencias_bmi))
@@ -201,13 +306,14 @@ print(paste("Número de registros con BMI inconsistente respecto a peso/altura:"
 # Corrección de inconsistencias
 
 # Sustituimos por NA valores biológicamente imposibles:
-# - Horas de sueño: dormir <= 2h o >= 20h de forma continuada es anómalo/error de encuesta
+# - Horas de sueño: dormir <= 2h o >= 20h de forma continuada es anómalo/error
+#   de encuesta
 # - Alturas inferiores a 1 metro en adultos
 
 heart_data <- heart_data %>%
   mutate(
-    SleepHours = ifelse(SleepHours <= 2 | SleepHours >= 20, NA, SleepHours),
-    HeightInMeters = ifelse(HeightInMeters < 1.0, NA, HeightInMeters)
+    HorasSueno = ifelse(HorasSueno <= 2 | HorasSueno >= 20, NA, HorasSueno),
+    AlturaMetros = ifelse(AlturaMetros < 1.0, NA, AlturaMetros)
   )
 ```
 
@@ -226,9 +332,9 @@ Subsection text here.
 
 Bulleted lists look like this:
 
--   First bullet
--   Second bullet
--   Third bullet
+- First bullet
+- Second bullet
+- Third bullet
 
 All figures and tables should be cited in the main text as Figure
 \ref{fig:fig1}, \ref{tab:tab1}, etc. To get cross-reference to figure
