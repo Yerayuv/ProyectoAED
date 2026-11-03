@@ -316,6 +316,40 @@ heart_data <- heart_data %>%
     AlturaMetros = ifelse(AlturaMetros < 1.0, NA, AlturaMetros)
   )
 ```
+## Valores Perdidos y Observaciones Completas
+
+A continuación se cuantifica el número y porcentaje de valores perdidos presentes en las variables y se evalúa el volumen de observaciones completas.
+
+```{r valores_perdidos}
+# Número y porcentaje de NAs por columna
+
+nas_columna <- colSums(is.na(heart_data))
+nas_columna
+
+pct_nas <- round((nas_columna / nrow(heart_data)) * 100, 2)
+pct_nas
+
+# Tabla con las variables que presentan valores perdidos (ordenadas de mayor a menor)
+tabla_nas <- tibble(
+  Variable = names(nas_columna),
+  Num_NAs = nas_columna,
+  Porcentaje = paste(pct_nas, " %")
+) %>%
+  filter(Num_NAs > 0) %>%
+  arrange(desc(Num_NAs))
+
+# Mostramos las 10 variables con mayor volumen de NAs
+head(tabla_nas, 10)
+
+# Observaciones completas
+num_completas <- sum(complete.cases(heart_data))
+pct_completas <- round((num_completas / nrow(heart_data)) * 100, 2)
+
+print(paste("Número de observaciones completas:", num_completas))
+print(paste("Porcentaje de observaciones completas:", pct_completas, "%"))
+```
+
+A diferencia de análisis sobre muestras pequeñas donde se eliminan todas las filas incompletas, en este caso descartar observaciones con algún valor perdido supondría perder un porcentaje demasiado alto de los pacientes (principalmente por no haber contestado a preguntas secundarias como la vacunación, la prueba de VIH o el número de dientes extraidos). Por tanto, se conservan las observaciones para el análisis general y se aplicarán métodos de imputación.
 
 # Resultados
 
