@@ -387,6 +387,94 @@ Al comparar los resultados se observa una notable discrepancia entre las medidas
 
 * En el IMC y el PesoKilogramos, la media es superior a la mediana debido a la presencia de casos con obesidad severa en la cola superior de la distribución.
 
+
+## Detección Univariante de Outliers y Comparativa de Métodos
+
+A continuación se aplican y comparan cuatro métodos de detección de outliers sobre el IMC (Índice de Masa Corporal): regla 3 sigma, identificador Hampel, regla del boxplot y percentiles (5% y 95%). 
+
+Para cada método se evalúa tanto el número de anomalías detectadas como los umbrales que definen los valores típicos para decidir como tratar a los valores extremos.
+
+```{r deteccion_outliers}
+# 1. Definición de las 4 funciones de detección
+
+# Regla 3 Sigma
+reglasigma <- function(x) {
+  media <- mean(x, na.rm = TRUE)
+  desviacion <- sd(x, na.rm = TRUE)
+  abs(x - media) > 3 * desviacion
+}
+
+# Identificador Hampel
+reglahampel <- function(x) {
+  mediana <- median(x, na.rm = TRUE)
+  mad <- 1.4826 * median(abs(x - mediana), na.rm = TRUE)
+  abs(x - mediana) > 3 * mad
+}
+
+# Regla Boxplot
+reglaboxplot <- function(x) {
+  q1 <- quantile(x, 0.25, na.rm = TRUE)
+  q3 <- quantile(x, 0.75, na.rm = TRUE)
+  iqr <- q3 - q1
+  (x < q1 - 1.5 * iqr) | (x > q3 + 1.5 * iqr)
+}
+
+# Percentiles (5% - 95%)
+reglapercentil <- function(x) {
+  p05 <- quantile(x, 0.05, na.rm = TRUE)
+  p95 <- quantile(x, 0.95, na.rm = TRUE)
+  (x < p05) | (x > p95)
+}
+
+# Aplicación de las reglas sobre el IMC
+heart_outliers <- heart_data %>%
+  mutate(
+    IMC_Sigma     = reglasigma(IMC),
+    IMC_Hampel    = reglahampel(IMC),
+    IMC_Boxplot   = reglaboxplot(IMC),
+    IMC_Percentil = reglapercentil(IMC)
+  )
+
+# Cálculo de umbrales y tabla comparativa
+media_imc <- mean(heart_data$IMC, na.rm = TRUE)
+sd_imc    <- sd(heart_data$IMC, na.rm = TRUE)
+med_imc   <- median(heart_data$IMC, na.rm = TRUE)
+mad_imc   <- 1.4826 * median(abs(heart_data$IMC - med_imc), na.rm = TRUE)
+q1_imc    <- quantile(heart_data$IMC, 0.25, na.rm = TRUE)
+q3_imc    <- quantile(heart_data$IMC, 0.75, na.rm = TRUE)
+iqr_imc   <- q3_imc - q1_imc
+p05_imc   <- quantile(heart_data$IMC, 0.05, na.rm = TRUE)
+p95_imc   <- quantile(heart_data$IMC, 0.95, na.rm = TRUE)
+
+tabla_outliers <- tibble(
+  Método = c("Regla 3 Sigma", "Identificador Hampel", "Regla Boxplot", "Percentiles (5% - 95%)"),
+  Outliers_Detectados = c(
+    sum(heart_outliers$IMC_Sigma, na.rm = TRUE),
+    sum(heart_outliers$IMC_Hampel, na.rm = TRUE),
+    sum(heart_outliers$IMC_Boxplot, na.rm = TRUE),
+    sum(heart_outliers$IMC_Percentil, na.rm = TRUE)
+  ),
+  Porcentaje = paste(round(c(
+    mean(heart_outliers$IMC_Sigma, na.rm = TRUE),
+    mean(heart_outliers$IMC_Hampel, na.rm = TRUE),
+    mean(heart_outliers$IMC_Boxplot, na.rm = TRUE),
+    mean(heart_outliers$IMC_Percentil, na.rm = TRUE)
+  ) * 100, 2), "%"),
+  Umbral_Inferior = round(c(media_imc - 3 * sd_imc, med_imc - 3 * mad_imc, q1_imc - 1.5 * iqr_imc, p05_imc), 2),
+  Umbral_Superior = round(c(media_imc + 3 * sd_imc, med_imc + 3 * mad_imc, q3_imc + 1.5 * iqr_imc, p95_imc), 2)
+)
+
+kable(tabla_outliers, caption = "Comparativa de métodos de detección de outliers y umbrales en la variable IMC.")
+```
+
+
+**La regla 3 Sigma es poco agresiva:** fija el umbral superior en 48.21, detectando solo un 1.28% de outliers debido a que la propia desviación típica se expande por la presencia de casos extremos.
+**El identificador Hampel es más agresivo:** al basarse en el MADM, sitúa el umbral superior en 44.03, identificando un 2.69% de anomalías.
+**La regla del Boxplot:** con un umbral superior de 43.33 y detectando un 3.11% de valores fuera de los bigotes. Esto pasa porque justo la variable IMC no es simétrica si no con una cola a la derecha.
+**Percentiles:** corta de forma fija el 10% de la muestra, con independencia de la distribución.
+
+**Tratamiento de los outliers identificados:** Estos valores de IMC no representan errores de medición o transcripción (ya fueron filtrados antes), sino observaciones biológicamente reales correspondientes a pacientes con obesidad mórbida (grado III). Por tanto, no se eliminan del conjunto de datos, sino que se conservan para ser analizados mediante procedimientos y estadísticos en los siguientes bloques.
+
 # Resultados
 
 This section may be divided by subheadings. It should provide a concise
