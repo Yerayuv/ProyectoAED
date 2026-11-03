@@ -351,6 +351,42 @@ print(paste("Porcentaje de observaciones completas:", pct_completas, "%"))
 
 A diferencia de análisis sobre muestras pequeñas donde se eliminan todas las filas incompletas, en este caso descartar observaciones con algún valor perdido supondría perder un porcentaje demasiado alto de los pacientes (principalmente por no haber contestado a preguntas secundarias como la vacunación o la prueba de VIH). Por tanto, se conservan las observaciones para el análisis general y se aplicarán métodos de imputación.
 
+## Estadísticos Descriptivos
+
+Se analiza la influencia de los valores extremos sobrelas variables numéricas. Para ello, se calculan estadísticos clásicos sensibles a valores atípicos (media y desviación típica) y se contrastan con estimadores robustos (mediana, MADM e IQR).
+
+```{r estadisticos_descriptivos}
+# Función MADM robusta a NAs
+madm <- function(x, na.rm = TRUE) {
+  1.4826 * median(abs(x - median(x, na.rm = TRUE)), na.rm = TRUE)
+}
+
+# Cálculo de estadísticos para cada variable numérica
+estadisticos_num <- heart_data %>%
+  select(where(is.numeric)) %>%
+  pivot_longer(
+    cols = everything(), 
+    names_to = "Variable", 
+    values_to = "Valor"
+  ) %>%
+  group_by(Variable) %>%
+  summarise(
+    Media   = round(mean(Valor, na.rm = TRUE), 2),
+    SD      = round(sd(Valor, na.rm = TRUE), 2),
+    Mediana = round(median(Valor, na.rm = TRUE), 2),
+    MADM    = round(madm(Valor, na.rm = TRUE), 2),
+    IQR     = round(IQR(Valor, na.rm = TRUE), 2)
+  )
+
+kable(estadisticos_num, caption = "Comparativa de estadísticos clásicos y robustos en variables numéricas.")
+```
+
+Al comparar los resultados se observa una notable discrepancia entre las medidas clásicas y las robustas en variables con fuerte asimetría:
+
+* En DiasMalaSaludFisica y DiasMalaSaludMental, la mediana y el MADM son 0 (la mayoría de los individuos dicen no tener días de enfermedad), mientras que la media se sitúa en torno a 4 días con una desviación típica de más de 8 días, claramente inflada por los individuos con patologías crónicas graves (30 días).
+
+* En el IMC y el PesoKilogramos, la media es superior a la mediana debido a la presencia de casos con obesidad severa en la cola superior de la distribución.
+
 # Resultados
 
 This section may be divided by subheadings. It should provide a concise
