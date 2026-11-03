@@ -96,28 +96,75 @@ El análisis exploratorio buscará identificar cuáles de estas variables
 muestran una mayor asociación con las cardiopatías, cómo interactúan entre sí 
 y qué patrones o perfiles de pacientes presentan una mayor vulnerabilidad.
 
+
 # Métodos y Materiales
 
-Materials and Methods should be described with sufficient details to
-allow others to replicate and build on published results. Please note
-that publication of your manuscript implicates that you must make all
-materials, data, computer code, and protocols associated with the
-publication available to readers. Please disclose at the submission
-stage any restrictions on the availability of materials or information.
-New methods and protocols should be described in detail while
-well-established methods can be briefly described and appropriately
-cited.
+## Descripción del Conjunto de Datos y Procedencia
 
-Research manuscripts reporting large datasets that are deposited in a
-publicly available database should specify where the data have been
-deposited and provide the relevant accession numbers. If the accession
-numbers have not yet been obtained at the time of submission, please
-state that they will be provided during review. They must be provided
-prior to publication.
+El conjunto de datos analizado procede del Behavioral Risk Factor Surveillance System (BRFSS) correspondiente al año 2022, un sistema de encuestas telefónicas coordinado por los Centros para el Control y la Prevención de Enfermedades de los Estados Unidos. Esta base de datos recopila información anual de ciudadanos adultos no institucionalizados sobre hábitos de riesgo para la salud, condiciones médicas crónicas y uso de servicios preventivos.
 
-Interventionary studies involving animals or humans, and other studies
-require ethical approval must list the authority that provided approval
-and the corresponding ethical approval code.
+El conjunto cuenta inicialmente con 445.132 observaciones y 40 variables que recogen mediciones biométricas continuas, variables sociodemográficas y antecedentes clínicos.
+
+## Ingesta y Tipado de Variables
+
+La importación se realiza de forma reproducible a partir del archivo comprimido mediante la librería readr. Posteriormente, se convierten las variables cualitativas a factores nominales y ordinales, y se define la variable objetivo HeartDisease (definida como presencia de infarto de miocardio HadHeartAttack o angina de pecho HadAngina).
+
+```{r carga_y_tipado}
+# Carga, puede tardar unos segundos
+heart_raw <- read_csv("data/heart_2022_with_nans.csv.gz")
+
+# Tipado de variables y creación de HeartDisease
+heart_data <- heart_raw %>%
+  mutate(
+    # Variable objetivo combinada (Cardiopatía)
+    HeartDisease = factor(
+    if_else(HadHeartAttack == "Yes" | HadAngina == "Yes", "Yes", "No"), 
+    levels = c("No", "Yes")),
+    
+    # Factores ordinales con jerarquía lógica
+    GeneralHealth = factor(
+      GeneralHealth,
+      levels = c("Poor", "Fair", "Good", "Very good", "Excellent"),
+      ordered = TRUE
+    ),
+    
+    AgeCategory = factor(
+      AgeCategory,
+      levels = c(
+        "Age 18 to 24", "Age 25 to 29", "Age 30 to 34", "Age 35 to 39",
+        "Age 40 to 44", "Age 45 to 49", "Age 50 to 54", "Age 55 to 59",
+        "Age 60 to 64", "Age 65 to 69", "Age 70 to 74", "Age 75 to 79",
+        "Age 80 or older"
+      ),
+      ordered = TRUE
+    ),
+    
+    RemovedTeeth = factor(
+      RemovedTeeth,
+      levels = c("None", "1 to 5", "6 or more", "All"),
+      ordered = TRUE
+    ),
+    
+    # Factores nominales (resto de variables de texto)
+    across(where(is.character), as.factor)
+  )
+
+# 3. Resumen del dataset
+tabla_resumen <- tibble(
+  Métrica = c("Total de Observaciones (Filas)", "Variables Totales", 
+              "Casos con Cardiopatía (Yes)", "Casos sin Cardiopatía (No)", 
+              "Porcentaje de Cardiopatía (%)"),
+  Valor = c(
+    nrow(heart_data),
+    as.character(ncol(heart_data)),
+    sum(heart_data$HeartDisease == "Yes", na.rm = TRUE),
+    sum(heart_data$HeartDisease == "No", na.rm = TRUE),
+    paste(round(mean(heart_data$HeartDisease == "Yes", na.rm = TRUE) * 100, 2), " %")
+  )
+)
+
+kable(tabla_resumen, caption = "Dimensiones iniciales y porcentaje de cardiopatías.")
+```
 
 # Resultados
 
