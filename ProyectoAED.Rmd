@@ -166,6 +166,51 @@ tabla_resumen <- tibble(
 kable(tabla_resumen, caption = "Dimensiones iniciales y porcentaje de cardiopatías.")
 ```
 
+## Detección y Corrección de Inconsistencias
+
+Siguiendo con el análisis exploratorio se analiza la presencia de valores especiales, valores numéricos imposibles para las variables y la consistencia entre el índice de masa corporal, el peso y la altura.
+
+```{r deteccion_inconsistencias}
+#Comprobación de valores especiales
+
+infinitos <- sapply(heart_data %>% select(where(is.numeric)), function(x) sum(is.infinite(x)))
+print("Valores infinitos por variable numérica:")
+print(infinitos)
+
+# Comprobación de valores menores o iguales a cero
+menores_iguales_cero <- sapply(heart_data %>% select(where(is.numeric)), function(x) sum(x <= 0, na.rm = TRUE))
+print("Valores <= 0 por variable:")
+print(menores_iguales_cero)
+
+#En PhysicalHealthDays y en MentalHealthDays sí tiene sentido encontrar iguales
+#a 0
+
+# Calculamos la diferencia entre el BMI registrado y el calculado
+
+# Se usa un margen de tolerancia de 1.5 kg/m^2 porque los datos originales
+# se recogieron en unidades imperiales (libras y pulgadas) y al convertirlos
+# a metros y kilogramos se acumulan errores de redondeo de hasta +-1.2 puntos.
+# Una diferencia superior a 1.5 indica un error real de incoherencia.
+
+bmi_calculado <- heart_data$WeightInKilograms / (heart_data$HeightInMeters^2)
+diferencia_bmi <- abs(heart_data$BMI - bmi_calculado)
+inconsistencias_bmi <- sum(diferencia_bmi > 1.5, na.rm = TRUE)
+
+print(paste("Número de registros con BMI inconsistente respecto a peso/altura:", inconsistencias_bmi))
+
+# Corrección de inconsistencias
+
+# Sustituimos por NA valores biológicamente imposibles:
+# - Horas de sueño: dormir <= 2h o >= 20h de forma continuada es anómalo/error de encuesta
+# - Alturas inferiores a 1 metro en adultos
+
+heart_data <- heart_data %>%
+  mutate(
+    SleepHours = ifelse(SleepHours <= 2 | SleepHours >= 20, NA, SleepHours),
+    HeightInMeters = ifelse(HeightInMeters < 1.0, NA, HeightInMeters)
+  )
+```
+
 # Resultados
 
 This section may be divided by subheadings. It should provide a concise
