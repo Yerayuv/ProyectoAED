@@ -164,7 +164,7 @@ Conductas de riesgo y diagnóstico positivo de COVID-19.
 La importación se realiza de forma reproducible a partir del archivo
 comprimido mediante la librería readr. Posteriormente, se convierten las
 variables cualitativas a factores nominales y ordinales, y se define la
-variable objetivo HeartDisease (definida como presencia de infarto de
+variable objetivo EnfermedadCardiaca (definida como presencia de infarto de
 miocardio HadHeartAttack o angina de pecho HadAngina).
 
 ```{r carga_y_tipado}
@@ -244,7 +244,7 @@ heart_data <- heart_data %>%
     
     DientesExtraidos = factor(
       DientesExtraidos,
-      levels = c("None", "1 to 5", "6 or more", "All"),
+      levels = c("None of them", "1 to 5", "6 or more, but not all", "All"),
       ordered = TRUE
     ),
     
@@ -349,7 +349,7 @@ print(paste("Número de observaciones completas:", num_completas))
 print(paste("Porcentaje de observaciones completas:", pct_completas, "%"))
 ```
 
-A diferencia de análisis sobre muestras pequeñas donde se eliminan todas las filas incompletas, en este caso descartar observaciones con algún valor perdido supondría perder un porcentaje demasiado alto de los pacientes (principalmente por no haber contestado a preguntas secundarias como la vacunación, la prueba de VIH o el número de dientes extraidos). Por tanto, se conservan las observaciones para el análisis general y se aplicarán métodos de imputación.
+A diferencia de análisis sobre muestras pequeñas donde se eliminan todas las filas incompletas, en este caso descartar observaciones con algún valor perdido supondría perder un porcentaje demasiado alto de los pacientes (principalmente por no haber contestado a preguntas secundarias como la vacunación o la prueba de VIH). Por tanto, se conservan las observaciones para el análisis general y se aplicarán métodos de imputación.
 
 # Resultados
 
