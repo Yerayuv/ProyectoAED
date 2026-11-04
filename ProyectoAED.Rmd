@@ -53,7 +53,7 @@ pacman::p_load(
   knitr,        # Formateo de tablas
   kableExtra,   # Personalización avanzada de tablas
   tidyverse,    # Manipulación (dplyr, tidyr, readr) y gráficos (ggplot2)
-  skimr         # Resúmenes estadísticos descriptivos
+  skimr,        # Resúmenes estadísticos descriptivos
   car
 )
 ```
@@ -225,6 +225,18 @@ heart_data <- heart_data %>%
     if_else(InfartoMiocardio == "Yes" | AnginaPecho == "Yes", "Yes", "No"), 
     levels = c("No", "Yes")),
     
+    # Recodificación de Diabetes (agrupando prediabetes y reasignando gestacional)
+    Diabetes = factor(
+      case_when(
+        Diabetes == "Yes" ~ "Yes",
+        Diabetes == "No, pre-diabetes or borderline diabetes" ~ "Yes",
+        Diabetes == "Yes, but only during pregnancy (female)" ~ "No",
+        Diabetes == "No" ~ "No",
+        TRUE ~ NA_character_
+      ),
+      levels = c("No", "Yes")
+    ),
+    
     # Factores ordinales con jerarquía lógica
     SaludGeneral = factor(
       SaludGeneral,
@@ -247,6 +259,13 @@ heart_data <- heart_data %>%
       DientesExtraidos,
       levels = c("None of them", "1 to 5", "6 or more, but not all", "All"),
       ordered = TRUE
+    ),
+    
+    # NUEVA COLUMNA: Índice de Comorbilidad (Suma de patologías crónicas por paciente)
+    TotalEnfermedades = rowSums(
+      across(c(Ictus, Diabetes, Asma, EPOC, 
+               EnfermedadRenal, Artritis, CancerPiel, TrastornoDepresivo)) == "Yes", 
+      na.rm = TRUE
     ),
     
     # Factores nominales (resto de variables de texto)
@@ -630,10 +649,11 @@ tipo de dato de cada columna.
 ### Variables Cuantitativas
 
 El análisis univariante de las variables cuantitativas (`AlturaMetros`,
-`PesoKilogramos`, `IMC`, `HorasSueno`, `DiasMalaSaludFisica` y
-`DiasMalaSaludMental`) permite evaluar sus propiedades distribucionales,
-contrastando los estadísticos clásicos con estimadores robustos para
-mitigar el efecto de la asimetría y la presencia de colas pesadas.
+`PesoKilogramos`, `IMC`, `HorasSueno`, `TotalEnfermedades`,
+`DiasMalaSaludFisica` y `DiasMalaSaludMental`) permite evaluar sus
+propiedades distribucionales, contrastando los estadísticos clásicos con
+estimadores robustos para mitigar el efecto de la asimetría y la
+presencia de colas pesadas.
 
 Primero vamos a comenzar con unos plots de las distribuciones de cada
 variable, obviando `AlturaMetros` y `PesoKilogramos` porque son algo
@@ -720,6 +740,11 @@ Al observar la tabla nos damos cuenta de varias cosas:
     debido a la presencia de casos con obesidad severa en la cola
     superior de la distribución.
 
+-   La variable `NumeroEnfermedades` es numérica pero es basicamente un
+    factor, ya que hay poco rango de enfermedades que se pueden padecer.
+    El valor medio y mediano ronda 1 enfermedad por persona pero su
+    distribución no merece la pena representarse gráficamente por ahora.
+
 -   En cuanto al sesgo, como cabría esperar, las variables más
     asimétricas son las que más sesgo tienen. Además, vemos que `IMC`
     tiene un sesgo no despreciable, lo que sugiere que la distribución
@@ -777,8 +802,121 @@ Comenzando el análisis de las variables binarias, lo primero que vamos a
 hacer es el cálculo de la proporción de 'Sí' en cada una de las
 variables.
 
-```{r}
+```{r tabla-binarias, message=FALSE, warning=FALSE}
 
+variables_binarias <- heart_data %>%
+  select(where(~ is.factor(.x) && nlevels(.x) == 2)) %>%
+  names()
+
+tabla_binarias <- heart_data %>%
+  select(any_of(variables_binarias)) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Respuesta") %>%
+  filter(!is.na(Respuesta)) %>%
+  count(Variable, Respuesta, name = "Conteo") %>%
+  group_by(Variable) %>%
+  mutate(Porcentaje = round((Conteo / sum(Conteo)) * 100, 2)) %>%
+  ungroup() %>%
+  filter(Respuesta == "Yes") %>%
+  arrange(desc(Porcentaje)) %>%
+  select(Variable, N = Conteo, Porcentaje = Porcentaje)
+
+kable(tabla_binarias, caption = "Frecuencia de factores de riesgo y patologías binarias.")
+```
+
+Viendo esta tabla podemos destacar la presencia de distintos tipos de
+variables, con frecuencias más o menos grandes. Destaca el desbalance de
+nuestra variable objetivo, con un 9% de casos positivos, lo cual puede
+ser importante en un futuro al trabajar con modelos predictivos. Para
+tener una mejor idea de lo que estamos viendo en el resto de variables
+podemos fragmentar las variables en distintos grupos, siendo estos
+grupos hábitos, otras patologías y distintas medidas de prevención.
+
+```{r fig-binarias-tematica, fig.cap="Prevalencia de factores binarios agrupados por dominios clínicos de la introducción.\\label{fig:binarias_bloques}", fig.width=9, fig.height=6, out.width="100%", warning=FALSE, message=FALSE}
+habitos_binarios <- c("ActividadFisica", "ConsumidorAlcohol")
+patologias_binarias <- c("Ictus", "Diabetes", 
+                         "Asma", "EPOC", "EnfermedadRenal", "Artritis", 
+                         "CancerPiel", "TrastornoDepresivo")
+prevencion_binarias <- c("TomografiaTorax", "PruebaVIH", "VacunaGripeUltimoAno", 
+                         "VacunaNeumococo", "VacunaTetanos10Anos", "ConductaAltoRiesgo", "CovidPositivo")
+limitaciones_binarias <- c("DificultadAuditiva", "DificultadVisual", "DificultadConcentracion", 
+                           "DificultadCaminar", "DificultadVestirseBanarse", "DificultadTareasDiarias")
+
+todas_binarias <- c(habitos_binarios, patologias_binarias, prevencion_binarias,limitaciones_binarias)
+
+
+tabla_binarias_tematica <- heart_data %>%
+  select(any_of(todas_binarias)) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Respuesta") %>%
+  filter(!is.na(Respuesta)) %>%
+  count(Variable, Respuesta, name = "Conteo") %>%
+  group_by(Variable) %>%
+  mutate(Porcentaje = round((Conteo / sum(Conteo)) * 100, 2)) %>%
+  ungroup() %>%
+  filter(Respuesta == "Yes") %>%
+  mutate(
+    BloqueTematico = case_when(
+      Variable %in% habitos_binarios     ~ "1. Hábitos de Vida",
+      Variable %in% patologias_binarias  ~ "2. Patologías y Antecedentes",
+      Variable %in% prevencion_binarias  ~ "3. Prevención y Atención Médica",
+      Variable %in% limitaciones_binarias  ~ "4. Limitaciones",
+      TRUE                               ~ "Otros"
+    )
+  ) %>%
+  select(BloqueTematico, Variable, Casos_Yes = Conteo, Prevalencia_Pct = Porcentaje) %>%
+  arrange(BloqueTematico, desc(Prevalencia_Pct))
+
+
+heart_data %>%
+  select(any_of(todas_binarias)) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Respuesta") %>%
+  filter(!is.na(Respuesta)) %>%
+  count(Variable, Respuesta) %>%
+  group_by(Variable) %>%
+  mutate(Proporcion = n / sum(n)) %>%
+  ungroup() %>%
+  filter(Respuesta == "Yes") %>%
+  mutate(
+    BloqueTematico = case_when(
+      Variable %in% habitos_binarios     ~ "1. Hábitos de Vida",
+      Variable %in% patologias_binarias  ~ "2. Patologías y Antecedentes",
+      Variable %in% prevencion_binarias  ~ "3. Prevención y Atención Médica",
+      Variable %in% limitaciones_binarias  ~ "4. Limitaciones",
+      TRUE                               ~ "Otros"
+    )
+  ) %>%
+  ggplot(aes(x = reorder(Variable, Proporcion), y = Proporcion * 100, fill = BloqueTematico)) +
+  geom_col(width = 0.7, show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ BloqueTematico, scales = "free", ncol = 1) +
+  theme_minimal() +
+  labs(title = "Prevalencia de Indicadores Binarios por Dominio Clínico",
+       x = NULL, y = "Prevalencia (%)")
+```
+
+De esta manera, el análisis de cada grupo se vuelve más fácil.
+
+-   Los hábitos de vida son solo 2, así que solo podemos comentar que
+    son variables muy balanceadas.
+
+-   Las patologías tienden a ser más raras y por tanto conviene llevar
+    cuidado con el desbalanceo de clases.
+
+-   El tercer gráfico correspondiente a la atención médica y
+    prevenciones detaca que volvemos a tener variables más o menos
+    balanceadas exceptuando `ConductaAltoRiesgo`.
+
+-   Por último exploramos las variables que expresan las dificultades en
+    distintos ámbitos de la vida, que por supuesto son variables
+    bastante desbalanceadas a favor del no.
+
+Por último, conviene destacar que al igual que con diabetes alguna
+variable podría perder algo de información para volverse binaria y
+analizarla aquí pero a priori no parece que merezca la pena. Otra
+variable que puede ser interpretada como binaria es la de `Sexo` , pero
+su balance hace que no aporte nada analizarla aquí.
+
+```{r}
+heart_data %>% count(Sexo) %>% mutate(Porcentaje = round(n / sum(n) * 100, 2))
 ```
 
 ### Variables Categóricas
