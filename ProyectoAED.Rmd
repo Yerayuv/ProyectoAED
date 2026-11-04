@@ -54,6 +54,7 @@ pacman::p_load(
   kableExtra,   # Personalización avanzada de tablas
   tidyverse,    # Manipulación (dplyr, tidyr, readr) y gráficos (ggplot2)
   skimr         # Resúmenes estadísticos descriptivos
+  car
 )
 ```
 
@@ -731,7 +732,54 @@ Al observar la tabla nos damos cuenta de varias cosas:
 -   `AlturaMetros` sí parece seguir algo parecido a una normal debido a
     su curtosis y sesgo.
 
+Como último paso para este tipo de variables vamos a comprobar la
+normalidad con Q-Q plots, ya que los test de normalidad se ven muy
+penalizados por la cantidad tan grande de instancias que tenemos.
+
+```{r fig-qqplot-comparativa, fig.cap="Comparativa de gráficos QQ de normalidad para Altura, IMC y Horas de Sueño.\\label{fig:qqplot}", fig.width=10, fig.height=4, out.width="100%", warning=FALSE, message=FALSE}
+par(mfrow = c(1, 3))
+
+# 1. QQ-plot para Altura
+qqPlot(heart_data$AlturaMetros, 
+       main = "A) Altura (Metros)", 
+       xlab = "Cuantiles teóricos", 
+       ylab = "Cuantiles muestrales",
+       id = FALSE)
+
+# 2. QQ-plot para IMC
+qqPlot(heart_data$IMC, 
+       main = "B) Índice de Masa Corporal", 
+       xlab = "Cuantiles teóricos", 
+       ylab = "Cuantiles muestrales",
+       id = FALSE)
+
+# 3. QQ-plot para Horas de Sueño
+qqPlot(heart_data$HorasSueno, 
+       main = "C) Horas de Sueño", 
+       xlab = "Cuantiles teóricos", 
+       ylab = "Cuantiles muestrales",
+       id = FALSE)
+
+# Restaurar la configuración gráfica por defecto
+par(mfrow = c(1, 1))
+```
+
+Comparando los cuantiles de nuestra distribución con los de una
+gaussiana teórica vemos como el desplazamiento de las distribuciones de
+`IMC` y `HorasSueno` son lo suficientemente importantes como para
+descartar su normalidad, pero con altura vemos como su comportamiento
+puede ser lo suficientemente parecido como para asumir que sigue una
+distribución gaussiana.
+
 ### Variables Binarias
+
+Comenzando el análisis de las variables binarias, lo primero que vamos a
+hacer es el cálculo de la proporción de 'Sí' en cada una de las
+variables.
+
+```{r}
+
+```
 
 ### Variables Categóricas
 
