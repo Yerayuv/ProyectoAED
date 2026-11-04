@@ -393,18 +393,9 @@ estadisticos_num <- heart_data %>%
 kable(estadisticos_num, caption = "Comparativa de estadísticos clásicos y robustos en variables numéricas.")
 ```
 
-Al comparar los resultados se observa una notable discrepancia entre las
-medidas clásicas y las robustas en variables con fuerte asimetría:
-
--   En DiasMalaSaludFisica y DiasMalaSaludMental, la mediana y el MADM
-    son 0 (la mayoría de los individuos dicen no tener días de
-    enfermedad), mientras que la media se sitúa en torno a 4 días con
-    una desviación típica de más de 8 días, claramente inflada por los
-    individuos con patologías crónicas graves (30 días).
-
--   En el IMC y el PesoKilogramos, la media es superior a la mediana
-    debido a la presencia de casos con obesidad severa en la cola
-    superior de la distribución.
+Por ahora no vamos a analizar estos valores ya que esto se hará en el
+análisis de resultados, pero conocer estos valores es necesario para la
+posterior detección de outliers.
 
 ## Detección Univariante de Outliers y Comparativa de Métodos
 
@@ -532,13 +523,13 @@ df_plot_outliers <- heart_outliers %>%
   )
 
 # Gráfico de puntos con jitter
-ggplot(df_plot_outliers, aes(x = Metodo, y = IMC, color = Es_Outlier)) +
+ggplot(df_plot_outliers, aes(x = Metodo, y = IMC, color = !Es_Outlier)) +
   geom_point(position = "jitter", alpha = 0.4, size = 0.8) +
   labs(
     title = "Detección de Outliers en IMC por Método",
     x = "Método de Detección",
     y = "Índice de Masa Corporal (IMC)",
-    color = "Es Outlier"
+    color = "No es Outlier"
   )
 ```
 
@@ -626,16 +617,125 @@ de datos en dos etapas:
 
 # Resultados
 
-This section may be divided by subheadings. It should provide a concise
-and precise description of the experimental results, their
-interpretation as well as the experimental conclusions that can be
-drawn.
+En este apartado vamos a estudiar los datos como hemos mencionado en la
+sección anterior, dividiéndolo en dos subsecciones dependiendo de la
+naturaleza del análisis.
 
-## Subsection Heading Here
+## Análisis Univariante
 
-Subsection text here.
+A su vez, el análisis univariante lo vamos a estructurar dependiendo del
+tipo de dato de cada columna.
 
-### Subsubsection Heading Here
+### Variables Cuantitativas
+
+El análisis univariante de las variables cuantitativas (`AlturaMetros`,
+`PesoKilogramos`, `IMC`, `HorasSueno`, `DiasMalaSaludFisica` y
+`DiasMalaSaludMental`) permite evaluar sus propiedades distribucionales,
+contrastando los estadísticos clásicos con estimadores robustos para
+mitigar el efecto de la asimetría y la presencia de colas pesadas.
+
+Primero vamos a comenzar con unos plots de las distribuciones de cada
+variable, obviando `AlturaMetros` y `PesoKilogramos` porque son algo
+redundantes con `IMC`.
+
+```{r fig-distribuciones, fig.cap="Distribución de las variables cuantitativas principales.\\label{fig:distribuciones}", fig.width=8, fig.height=6, out.width="100%", warning=FALSE, message=FALSE}
+library(tidyverse)
+
+# Seleccionamos las 4 variables y transformamos a formato largo
+heart_data %>%
+  select(IMC, HorasSueno, DiasMalaSaludFisica, DiasMalaSaludMental) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor") %>%
+  ggplot(aes(x = Valor)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+  facet_wrap(~ Variable, scales = "free") +
+  theme_minimal() +
+  labs(x = NULL, y = "Frecuencia")
+```
+
+Con estos histogramas podemos sacar varias conclusiones. De las dos
+primeras gráficas es resaltable la tendencia a valores pequeños de ambas
+variables, pero también el sesgo presente hacia los valores extremos 30
+y 0 por la naturaleza de las variables (al ser una respuesta subjetiva
+en una encuesta). Por otra parte, el histograma de horas de sueño
+también es peculiar en su medida, ya que se nota un cierto sesgo en
+ciertos números, pero la distribución es mucho más parecida a una
+normal. Por último, con el BMI pasa algo similar a esto último, ya que
+la distribución es bastante centrada.
+
+Todo esto podemos verlo de mejor manera en la tabla `estadisticos_num`
+hecha previamente. Sin embargo, antes de comentar lo que vemos en esta
+tabla podemos ampliarla con algunos estadísticos que habíamos obviado
+previamente.
+
+```{r tabla-estadisticos-cuantitativas, message=FALSE, warning=FALSE}
+skewness <- function(x) {
+  x <- x[!is.na(x)]
+  n <- length(x)
+  m <- mean(x)
+  s <- sd(x)
+  sum((x - m)^3 / s^3) / n
+}
+
+kurtosis <- function(x) {
+  x <- x[!is.na(x)]
+  n <- length(x)
+  m <- mean(x)
+  s <- sd(x)
+  sum((x - m)^4 / s^4) / n - 3
+}
+
+madm <- function(x) {
+  1.4826 * median(abs(x - median(x, na.rm = TRUE)), na.rm = TRUE)
+}
+
+# Hago de nuevo la tabla por todas las imputaciones y demas cambios que hemos hecho
+estadisticos_num <- heart_data %>%
+  select(where(is.numeric)) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor") %>%
+  group_by(Variable) %>%
+  summarise(
+    Media    = round(mean(Valor, na.rm = TRUE), 2),
+    SD       = round(sd(Valor, na.rm = TRUE), 2),
+    Mediana  = round(median(Valor, na.rm = TRUE), 2),
+    MADM     = round(madm(Valor), 2),
+    IQR      = round(IQR(Valor, na.rm = TRUE), 2),
+    Sesgo    = round(skewness(Valor), 2),
+    Curtosis = round(kurtosis(Valor), 2)
+  )
+
+kable(estadisticos_num, caption = "Estadísticos descriptivos y de forma para variables cuantitativas.")
+```
+
+Al observar la tabla nos damos cuenta de varias cosas:
+
+-   En `DiasMalaSaludFisica` y `DiasMalaSaludMental`, la mediana y el
+    MADM son 0 (la mayoría de los individuos dicen no tener días de
+    enfermedad, como habíamos visto), mientras que la media se sitúa en
+    torno a 4 días con una desviación típica de más de 8 días,
+    claramente inflada por los individuos con patologías crónicas graves
+    (30 días).
+
+-   En el `IMC` y el `PesoKilogramos`, la media es superior a la mediana
+    debido a la presencia de casos con obesidad severa en la cola
+    superior de la distribución.
+
+-   En cuanto al sesgo, como cabría esperar, las variables más
+    asimétricas son las que más sesgo tienen. Además, vemos que `IMC`
+    tiene un sesgo no despreciable, lo que sugiere que la distribución
+    quizás no es normal.
+
+-   La curtosis nos revela también que las colas de `IMC` y de
+    `HorasSueno` son demasiado anchas, así que probablemente no nos
+    encontramos ante distribuciones normales.
+
+-   `AlturaMetros` sí parece seguir algo parecido a una normal debido a
+    su curtosis y sesgo.
+
+### Variables Binarias
+
+### Variables Categóricas
+
+## Análisis Bivariante
 
 Bulleted lists look like this:
 
