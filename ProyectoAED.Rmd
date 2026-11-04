@@ -164,8 +164,8 @@ Conductas de riesgo y diagnóstico positivo de COVID-19.
 La importación se realiza de forma reproducible a partir del archivo
 comprimido mediante la librería readr. Posteriormente, se convierten las
 variables cualitativas a factores nominales y ordinales, y se define la
-variable objetivo EnfermedadCardiaca (definida como presencia de infarto de
-miocardio HadHeartAttack o angina de pecho HadAngina).
+variable objetivo EnfermedadCardiaca (definida como presencia de infarto
+de miocardio HadHeartAttack o angina de pecho HadAngina).
 
 ```{r carga_y_tipado}
 # Carga, puede tardar unos segundos
@@ -316,9 +316,12 @@ heart_data <- heart_data %>%
     AlturaMetros = ifelse(AlturaMetros < 1.0, NA, AlturaMetros)
   )
 ```
+
 ## Valores Perdidos y Observaciones Completas
 
-A continuación se cuantifica el número y porcentaje de valores perdidos presentes en las variables y se evalúa el volumen de observaciones completas.
+A continuación se cuantifica el número y porcentaje de valores perdidos
+presentes en las variables y se evalúa el volumen de observaciones
+completas.
 
 ```{r valores_perdidos}
 # Número y porcentaje de NAs por columna
@@ -349,11 +352,20 @@ print(paste("Número de observaciones completas:", num_completas))
 print(paste("Porcentaje de observaciones completas:", pct_completas, "%"))
 ```
 
-A diferencia de análisis sobre muestras pequeñas donde se eliminan todas las filas incompletas, en este caso descartar observaciones con algún valor perdido supondría perder un porcentaje demasiado alto de los pacientes (principalmente por no haber contestado a preguntas secundarias como la vacunación o la prueba de VIH). Por tanto, se conservan las observaciones para el análisis general y se aplicarán métodos de imputación.
+A diferencia de análisis sobre muestras pequeñas donde se eliminan todas
+las filas incompletas, en este caso descartar observaciones con algún
+valor perdido supondría perder un porcentaje demasiado alto de los
+pacientes (principalmente por no haber contestado a preguntas
+secundarias como la vacunación o la prueba de VIH). Por tanto, se
+conservan las observaciones para el análisis general y se aplicarán
+métodos de imputación.
 
 ## Estadísticos Descriptivos
 
-Se analiza la influencia de los valores extremos sobrelas variables numéricas. Para ello, se calculan estadísticos clásicos sensibles a valores atípicos (media y desviación típica) y se contrastan con estimadores robustos (mediana, MADM e IQR).
+Se analiza la influencia de los valores extremos sobrelas variables
+numéricas. Para ello, se calculan estadísticos clásicos sensibles a
+valores atípicos (media y desviación típica) y se contrastan con
+estimadores robustos (mediana, MADM e IQR).
 
 ```{r estadisticos_descriptivos}
 # Función MADM robusta a NAs
@@ -381,18 +393,28 @@ estadisticos_num <- heart_data %>%
 kable(estadisticos_num, caption = "Comparativa de estadísticos clásicos y robustos en variables numéricas.")
 ```
 
-Al comparar los resultados se observa una notable discrepancia entre las medidas clásicas y las robustas en variables con fuerte asimetría:
+Al comparar los resultados se observa una notable discrepancia entre las
+medidas clásicas y las robustas en variables con fuerte asimetría:
 
-* En DiasMalaSaludFisica y DiasMalaSaludMental, la mediana y el MADM son 0 (la mayoría de los individuos dicen no tener días de enfermedad), mientras que la media se sitúa en torno a 4 días con una desviación típica de más de 8 días, claramente inflada por los individuos con patologías crónicas graves (30 días).
+-   En DiasMalaSaludFisica y DiasMalaSaludMental, la mediana y el MADM
+    son 0 (la mayoría de los individuos dicen no tener días de
+    enfermedad), mientras que la media se sitúa en torno a 4 días con
+    una desviación típica de más de 8 días, claramente inflada por los
+    individuos con patologías crónicas graves (30 días).
 
-* En el IMC y el PesoKilogramos, la media es superior a la mediana debido a la presencia de casos con obesidad severa en la cola superior de la distribución.
-
+-   En el IMC y el PesoKilogramos, la media es superior a la mediana
+    debido a la presencia de casos con obesidad severa en la cola
+    superior de la distribución.
 
 ## Detección Univariante de Outliers y Comparativa de Métodos
 
-A continuación se aplican y comparan cuatro métodos de detección de outliers sobre el IMC (Índice de Masa Corporal): regla 3 sigma, identificador Hampel, regla del boxplot y percentiles (5% y 95%). 
+A continuación se aplican y comparan cuatro métodos de detección de
+outliers sobre el IMC (Índice de Masa Corporal): regla 3 sigma,
+identificador Hampel, regla del boxplot y percentiles (5% y 95%).
 
-Para cada método se evalúa tanto el número de anomalías detectadas como los umbrales que definen los valores típicos para decidir como tratar a los valores extremos.
+Para cada método se evalúa tanto el número de anomalías detectadas como
+los umbrales que definen los valores típicos para decidir como tratar a
+los valores extremos.
 
 ```{r deteccion_outliers}
 # 1. Definición de las 4 funciones de detección
@@ -467,21 +489,33 @@ tabla_outliers <- tibble(
 kable(tabla_outliers, caption = "Comparativa de métodos de detección de outliers y umbrales en la variable IMC.")
 ```
 
+**La regla 3 Sigma es poco agresiva:** fija el umbral superior en 48.21,
+detectando solo un 1.28% de outliers debido a que la propia desviación
+típica se expande por la presencia de casos extremos. **El identificador
+Hampel es más agresivo:** al basarse en el MADM, sitúa el umbral
+superior en 44.03, identificando un 2.69% de anomalías. **La regla del
+Boxplot:** con un umbral superior de 43.33 y detectando un 3.11% de
+valores fuera de los bigotes. Esto pasa porque justo la variable IMC no
+es simétrica si no con una cola a la derecha. **Percentiles:** corta de
+forma fija el 10% de la muestra, con independencia de la distribución.
 
-**La regla 3 Sigma es poco agresiva:** fija el umbral superior en 48.21, detectando solo un 1.28% de outliers debido a que la propia desviación típica se expande por la presencia de casos extremos.
-**El identificador Hampel es más agresivo:** al basarse en el MADM, sitúa el umbral superior en 44.03, identificando un 2.69% de anomalías.
-**La regla del Boxplot:** con un umbral superior de 43.33 y detectando un 3.11% de valores fuera de los bigotes. Esto pasa porque justo la variable IMC no es simétrica si no con una cola a la derecha.
-**Percentiles:** corta de forma fija el 10% de la muestra, con independencia de la distribución.
-
-**Tratamiento de los outliers identificados:** Estos valores de IMC no representan errores de medición o transcripción (ya fueron filtrados antes), sino observaciones biológicamente reales correspondientes a pacientes con obesidad mórbida (grado III). Por tanto, no se eliminan del conjunto de datos, sino que se conservan para ser analizados mediante procedimientos y estadísticos en los siguientes bloques.
-
-
+**Tratamiento de los outliers identificados:** Estos valores de IMC no
+representan errores de medición o transcripción (ya fueron filtrados
+antes), sino observaciones biológicamente reales correspondientes a
+pacientes con obesidad mórbida (grado III). Por tanto, no se eliminan
+del conjunto de datos, sino que se conservan para ser analizados
+mediante procedimientos y estadísticos en los siguientes bloques.
 
 ## Representación Gráfica de Outliers por Método
 
-Se representan gráficamente los valores de IMC frente a los métodos de detección empleados, mostrando los datos catalogados como típicos y los catalogados como outliers en distinto color.
+Se representan gráficamente los valores de IMC frente a los métodos de
+detección empleados, mostrando los datos catalogados como típicos y los
+catalogados como outliers en distinto color.
 
-Para evitar problemas de saturación visual en el gráfico debido al volumen de más de 400.000 observaciones, se utiliza una muestra aleatoria representativa de 5.000 observaciones con set.seed(123) y se aplica dispersión aleatoria con transparencia.
+Para evitar problemas de saturación visual en el gráfico debido al
+volumen de más de 400.000 observaciones, se utiliza una muestra
+aleatoria representativa de 5.000 observaciones con set.seed(123) y se
+aplica dispersión aleatoria con transparencia.
 
 ```{r grafico_outliers, fig.cap="Detección de outliers en IMC según cada método implementado.\\label{fig:outliers_imc}"}
 # Preparación de datos
@@ -510,18 +544,31 @@ ggplot(df_plot_outliers, aes(x = Metodo, y = IMC, color = Es_Outlier)) +
 
 El gráfico refleja de manera visual la sensibilidad de cada método.
 
-**Continuidad de los datos:** Se observa que los valores superiores no son puntos aislados ni errores tipográficos, sino una nube continua que se extiende hasta valores extremos, confirmando que se trata de individuos con obesidad severa real que deben conservarse en la muestra.
+**Continuidad de los datos:** Se observa que los valores superiores no
+son puntos aislados ni errores tipográficos, sino una nube continua que
+se extiende hasta valores extremos, confirmando que se trata de
+individuos con obesidad severa real que deben conservarse en la muestra.
 
-* **Comparativa de cortes:** La regla 3 Sigma deja una franja alta de puntos clasificados como normales (debido a la varianza inflada), mientras que la regla del Boxplot y el identificador Hampel capturan de forma equilibrada la masa de valores atípicos.
-
+-   **Comparativa de cortes:** La regla 3 Sigma deja una franja alta de
+    puntos clasificados como normales (debido a la varianza inflada),
+    mientras que la regla del Boxplot y el identificador Hampel capturan
+    de forma equilibrada la masa de valores atípicos.
 
 ## Imputación de Variables Numéricas
 
-Para garantizar la integridad de los análisis cuantitativos posteriores sin introducir sesgos artificiales, se aplica una imputación según la naturaleza de cada variable:
+Para garantizar la integridad de los análisis cuantitativos posteriores
+sin introducir sesgos artificiales, se aplica una imputación según la
+naturaleza de cada variable:
 
-**Variables AlturaMetros, PesoKilogramos, IMC:** Hombres y mujeres siguen distribuciones distintas. Imputamos los valores perdidos directamente por la media según el Sexo del paciente.
+**Variables AlturaMetros, PesoKilogramos, IMC:** Hombres y mujeres
+siguen distribuciones distintas. Imputamos los valores perdidos
+directamente por la media según el Sexo del paciente.
 
-**Variables de descanso y salud percibida (`HorasSueno`, `DiasMalaSaludFisica`, `DiasMalaSaludMental`):** Al concentrarse en valores típicos (7 horas de sueño y 0 días de enfermedad), se imputan mediante su mediana.
+**Variables de descanso y salud percibida (`HorasSueno`,
+`DiasMalaSaludFisica`, `DiasMalaSaludMental`):** Al concentrarse en
+valores típicos (7 horas de sueño y 0 días de enfermedad), se imputan
+mediante su mediana.
+
 ```{r imputacion_datos}
 # Imputación de medidas por Sexoç
 
@@ -548,8 +595,34 @@ nas_numericas_final <- sapply(heart_data %>% select(where(is.numeric)), function
 print("NAs restantes en variables numéricas tras la imputación:")
 print(nas_numericas_final)
 ```
-Tras el proceso de imputación, todas las variables numéricas continuas y discretas del estudio quedan con cero valores perdidos, listas para el análisis bivariante y multivariante.
 
+Tras el proceso de imputación, todas las variables numéricas continuas y
+discretas del estudio quedan con cero valores perdidos, listas para el
+análisis bivariante y multivariante.
+
+## 2.10. Estrategia de Análisis Estadístico
+
+Para dar respuesta a las preguntas planteadas, estudiaremos el conjunto
+de datos en dos etapas:
+
+-   **Análisis Univariante:** Se examinará de forma individual la
+    distribución y el comportamiento de cada variable del conjunto de
+    datos. En el caso de las variables cuantitativas, se calculará
+    estadísticos de tendencia central (media y mediana) y de dispersión
+    clásicos y robustos (desviación típica, rango intercuartílico y
+    MADM). Su representación visual se realizará mediante histogramas y
+    gráficos de densidad, evaluando la normalidad de las distribuciones
+    a través de QQ-plots. Las variables cualitativas y factores se
+    caracterizarán mediante distribuciones de frecuencias absolutas y
+    relativas, apoyadas en diagramas de barras.
+-   **Análisis Bivariante:** Se estudiarán las asociaciones e
+    dependencias entre pares de variables para identificar patrones .
+    Para las variables cuantitativas se emplearán coeficientes de
+    correlación, tanto Pearson como Spearman]. En el caso de las
+    variables cualitativas, se utilizan tablas de contingencia y el test
+    de independencia de $\chi^2$ . Asimismo, para evaluar la relación
+    entre variables cuantitativas y cualitativas se recurrirá a
+    diagramas de caja (*boxplots*) y gráficos de distribución comparada.
 
 # Resultados
 
@@ -566,9 +639,9 @@ Subsection text here.
 
 Bulleted lists look like this:
 
-- First bullet
-- Second bullet
-- Third bullet
+-   First bullet
+-   Second bullet
+-   Third bullet
 
 All figures and tables should be cited in the main text as Figure
 \ref{fig:fig1}, \ref{tab:tab1}, etc. To get cross-reference to figure
