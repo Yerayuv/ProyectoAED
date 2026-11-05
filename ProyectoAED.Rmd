@@ -1192,6 +1192,21 @@ indispensable saber si la vulnerabilidad de un paciente deriva de su
 consumo de tabaco, de un IMC elevado o de antecedentes patológicos,
 información que un componente principal abstracto no puede proporcionar.
 
+Además del factor clínico, existen fuertes motivos estadísticos para
+descartar su uso en este caso de estudio. Desde un punto de vista
+matemático, el PCA resulta inadecuado debido a que está diseñado para
+extraer patrones de varianza en espacios de variables numéricas
+continuas, mientras que la inmensa mayoría de los atributos de esta
+encuesta son factores categóricos (binarios, ordinales y nominales). Por
+otra parte, no existe una necesidad técnica de reducir el espacio
+dimensional para evitar la "maldición de la dimensionalidad" o posibles
+problemas de sobreajuste computacional, dado que se dispone de una
+muestra masiva de más de 246.000 observaciones frente a un número
+acotado de apenas 40 variables. Por todo ello, se opta por conservar el
+espacio original de variables explicativas, garantizando que los futuros
+modelos predictivos mantengan intacto el significado biológico de los
+datos y resulten completamente transparentes para el personal médico.
+
 # Discusión
 
 Authors should discuss the results and how they can be interpreted in
