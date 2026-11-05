@@ -27,6 +27,9 @@ institutionalreview: "Not applicable"
 informedconsent: "Not applicable"
 dataavailability: "Los datos utilizados están disponibles en el repositorio de GitHub del proyecto."
 conflictsofinterest: "Los autores declaran no tener conflicto de intereses."
+header-includes:
+  - \usepackage{etoolbox}
+  - \AtBeginEnvironment{Shaded}{\scriptsize}
 output: 
   rticles::mdpi_article:
     extra_dependencies: longtable
@@ -42,7 +45,7 @@ knitr::opts_chunk$set(
   message = FALSE,   
   fig.align = "center", 
   fig.width = 7,      
-  fig.height = 4.5,
+  fig.height = 3.0,
   dpi = 150
 )
 
@@ -120,49 +123,7 @@ sociodemográficas y antecedentes clínicos.
 
 ## Diccionario de Variables
 
-Para facilitar la comprensión del estudio, las 40 variables se traducen
-al español y se describen a continuación según su naturaleza:
-
-**Variable Objetivo Derivada:** `EnfermedadCardiaca`: Presencia de
-patología cardiovascular (infarto de miocardio o angina de pecho).
-
-**Variables Sociodemográficas:** `Estado`: Estado de residencia en EE.
-UU. `Sexo`: Sexo biológico (*Female / Male*). `GrupoEdad`: Intervalo de
-edad en tramos de cinco años (de 18-24 a 80 o más). `RazaEtnia`:
-Identificación racial y étnica.
-
-**Medidas Antropométricas y Estado Físico:** `AlturaMetros`: Altura en
-metros. `PesoKilogramos`: Peso en kilogramos. `IMC`: Índice de masa
-corporal en $kg/m^2$. `SaludGeneral`: Autopercepción del estado general
-de salud (*Poor, Fair, Good, Very good, Excellent*).
-`DiasMalaSaludFisica`: Número de días con mala salud física en los
-últimos 30 días (0 a 30). `DiasMalaSaludMental`: Número de días con
-problemas de salud mental en los últimos 30 días (0 a 30).
-
-**Hábitos de Vida:** `HorasSueno`: Horas promedio de sueño en 24 horas.
-`ActividadFisica`: Realización de ejercicio físico en los últimos 30
-días (*Yes / No*). `EstadoFumador`: Frecuencia y hábito de consumo de
-tabaco convencional. `UsoCigarrilloElectronico`: Uso de cigarrillos
-electrónicos o vapeadores. `ConsumidorAlcohol`: Consumo habitual de
-bebidas alcohólicas (*Yes / No*).
-
-**Patologías y Limitaciones:** `InfartoMiocardio`, `AnginaPecho`,
-`Ictus`: Antecedentes de patología cardiovascular aguda. `Diabetes`,
-`Asma`, `EPOC`, `EnfermedadRenal`,`Artritis`, `CancerPiel`,
-`TrastornoDepresivo`: Diagnósticos médicos previos (*Yes / No*).
-`DientesExtraidos`: Piezas dentales permanentes extraídas (*None, 1 to
-5, 6 or more, All*). `DificultadAuditiva`,`DificultadVisual`,
-`DificultadConcentracion`,
-`DificultadCaminar`,`DificultadVestirseBanarse`,
-`DificultadTareasDiarias`: Dificultades funcionales y limitaciones en la
-vida diaria.
-
-**Atención Médica y Prevención:** `UltimoChequeoMedico`: Tiempo
-transcurrido desde la última revisión médica rutinaria.
-`TomografiaTorax`: Realización de escáner o TAC de tórax. `PruebaVIH`,
-`VacunaGripeUltimoAno`,`VacunaNeumococo`, `VacunaTetanos10Anos`: Pruebas
-preventivas e inmunizaciones. `ConductaAltoRiesgo`, `CovidPositivo`:
-Conductas de riesgo y diagnóstico positivo de COVID-19.
+Las 40 variables del estudio se estructuran en seis dimensiones clínicas: **1) Sociodemográficas:** `Estado`, `Sexo`, `GrupoEdad` (13 tramos quinquenales) y `RazaEtnia`. **2) Antropométricas y salud física:** `AlturaMetros`, `PesoKilogramos`, `IMC` y percepción de salud (`SaludGeneral`, `DiasMalaSaludFisica`, `DiasMalaSaludMental`). **3) Hábitos de vida:** `HorasSueno`, `ActividadFisica`, `EstadoFumador`, `UsoCigarrilloElectronico` y `ConsumidorAlcohol`. **4) Patologías y comorbilidades:** `InfartoMiocardio`, `AnginaPecho`, `Ictus`, `Diabetes`, `Asma`, `EPOC`, `EnfermedadRenal`, `Artritis`, `CancerPiel` y `TrastornoDepresivo`. **5) Limitaciones funcionales:** `DientesExtraidos` y dificultades en la vida diaria (`DificultadAuditiva`, `Visual`, `Concentracion`, `Caminar`, `VestirseBanarse`, `TareasDiarias`). **6) Prevención y vacunas:** `UltimoChequeoMedico`, `TomografiaTorax`, `PruebaVIH`, `VacunaGripeUltimoAno`, `VacunaNeumococo`, `VacunaTetanos10Anos`, `ConductaAltoRiesgo` y `CovidPositivo`. Como variable objetivo derivada se define `EnfermedadCardiaca` (diagnóstico positivo en infarto o angina).
 
 ## Ingesta y Tipado de Variables
 
@@ -173,178 +134,69 @@ variable objetivo EnfermedadCardiaca (definida como presencia de infarto
 de miocardio HadHeartAttack o angina de pecho HadAngina).
 
 ```{r carga_y_tipado}
-# Carga, puede tardar unos segundos
+# Carga reproducible
 heart_raw <- read_csv("data/heart_2022_with_nans.csv.gz")
 
 # Renombrado de variables a español
 heart_data <- heart_raw %>%
   rename(
-    Estado = State,
-    Sexo = Sex,
-    SaludGeneral = GeneralHealth,
-    DiasMalaSaludFisica = PhysicalHealthDays,
-    DiasMalaSaludMental = MentalHealthDays,
-    UltimoChequeoMedico = LastCheckupTime,
-    ActividadFisica = PhysicalActivities,
-    HorasSueno = SleepHours,
-    DientesExtraidos = RemovedTeeth,
-    InfartoMiocardio = HadHeartAttack,
-    AnginaPecho = HadAngina,
-    Ictus = HadStroke,
-    Asma = HadAsthma,
-    CancerPiel = HadSkinCancer,
-    EPOC = HadCOPD,
-    TrastornoDepresivo = HadDepressiveDisorder,
-    EnfermedadRenal = HadKidneyDisease,
-    Artritis = HadArthritis,
-    Diabetes = HadDiabetes,
-    DificultadAuditiva = DeafOrHardOfHearing,
-    DificultadVisual = BlindOrVisionDifficulty,
-    DificultadConcentracion = DifficultyConcentrating,
-    DificultadCaminar = DifficultyWalking,
-    DificultadVestirseBanarse = DifficultyDressingBathing,
-    DificultadTareasDiarias = DifficultyErrands,
-    EstadoFumador = SmokerStatus,
-    UsoCigarrilloElectronico = ECigaretteUsage,
-    TomografiaTorax = ChestScan,
-    RazaEtnia = RaceEthnicityCategory,
-    GrupoEdad = AgeCategory,
-    AlturaMetros = HeightInMeters,
-    PesoKilogramos = WeightInKilograms,
-    IMC = BMI,
-    ConsumidorAlcohol = AlcoholDrinkers,
-    PruebaVIH = HIVTesting,
-    VacunaGripeUltimoAno = FluVaxLast12,
-    VacunaNeumococo = PneumoVaxEver,
-    VacunaTetanos10Anos = TetanusLast10Tdap,
-    ConductaAltoRiesgo = HighRiskLastYear,
-    CovidPositivo = CovidPos
+    Estado = State, Sexo = Sex, SaludGeneral = GeneralHealth,
+    DiasMalaSaludFisica = PhysicalHealthDays, DiasMalaSaludMental = MentalHealthDays,
+    UltimoChequeoMedico = LastCheckupTime, ActividadFisica = PhysicalActivities,
+    HorasSueno = SleepHours, DientesExtraidos = RemovedTeeth,
+    InfartoMiocardio = HadHeartAttack, AnginaPecho = HadAngina, Ictus = HadStroke,
+    Asma = HadAsthma, CancerPiel = HadSkinCancer, EPOC = HadCOPD,
+    TrastornoDepresivo = HadDepressiveDisorder, EnfermedadRenal = HadKidneyDisease,
+    Artritis = HadArthritis, Diabetes = HadDiabetes, DificultadAuditiva = DeafOrHardOfHearing,
+    DificultadVisual = BlindOrVisionDifficulty, DificultadConcentracion = DifficultyConcentrating,
+    DificultadCaminar = DifficultyWalking, DificultadVestirseBanarse = DifficultyDressingBathing,
+    DificultadTareasDiarias = DifficultyErrands, EstadoFumador = SmokerStatus,
+    UsoCigarrilloElectronico = ECigaretteUsage, TomografiaTorax = ChestScan,
+    RazaEtnia = RaceEthnicityCategory, GrupoEdad = AgeCategory, AlturaMetros = HeightInMeters,
+    PesoKilogramos = WeightInKilograms, IMC = BMI, ConsumidorAlcohol = AlcoholDrinkers,
+    PruebaVIH = HIVTesting, VacunaGripeUltimoAno = FluVaxLast12, VacunaNeumococo = PneumoVaxEver,
+    VacunaTetanos10Anos = TetanusLast10Tdap, ConductaAltoRiesgo = HighRiskLastYear, CovidPositivo = CovidPos
   )
 
 # Tipado de variables y creación de HeartDisease
 heart_data <- heart_data %>%
   mutate(
-    # Variable objetivo combinada (Cardiopatía)
-    EnfermedadCardiaca = factor(
-      if_else(InfartoMiocardio == "Yes" | AnginaPecho == "Yes", "Yes", "No"), 
-      levels = c("No", "Yes")
-    ),
-    
-    # Recodificación de Diabetes (agrupando prediabetes y reasignando gestacional)
-    Diabetes = factor(
-      case_when(
-        Diabetes == "Yes" ~ "Yes",
-        Diabetes == "No, pre-diabetes or borderline diabetes" ~ "Yes",
-        Diabetes == "Yes, but only during pregnancy (female)" ~ "No",
-        Diabetes == "No" ~ "No",
-        TRUE ~ NA_character_
-      ),
-      levels = c("No", "Yes")
-    ),
-    
-    # Factores ordinales con jerarquía lógica
-    SaludGeneral = factor(
-      SaludGeneral,
-      levels = c("Poor", "Fair", "Good", "Very good", "Excellent"),
-      ordered = TRUE
-    ),
-    
-    GrupoEdad = factor(
-      GrupoEdad,
-      levels = c(
-        "Age 18 to 24", "Age 25 to 29", "Age 30 to 34", "Age 35 to 39",
-        "Age 40 to 44", "Age 45 to 49", "Age 50 to 54", "Age 55 to 59",
-        "Age 60 to 64", "Age 65 to 69", "Age 70 to 74", "Age 75 to 79",
-        "Age 80 or older"
-      ),
-      ordered = TRUE
-    ),
-    
-    DientesExtraidos = factor(
-      DientesExtraidos,
-      levels = c("None of them", "1 to 5", "6 or more, but not all", "All"),
-      ordered = TRUE
-    ),
-    
-    EstadoFumador = factor(
-      EstadoFumador,
-      levels = c(
-        "Never smoked", 
-        "Former smoker", 
-        "Current smoker - now smokes some days", 
-        "Current smoker - now smokes every day"
-      ),
-      ordered = TRUE
-    ),
-    
-    UsoCigarrilloElectronico = factor(
-      UsoCigarrilloElectronico,
-      levels = c(
-        "Never used e-cigarettes in my entire life", 
-        "Not at all (right now)", 
-        "Use them some days", 
-        "Use them every day"
-      ),
-      ordered = TRUE
-    ),
-    
-    UltimoChequeoMedico = factor(
-      UltimoChequeoMedico,
-      levels = c(
-        "Within past year (anytime less than 12 months ago)",
-        "Within past 2 years (1 year but less than 2 years ago)",
-        "Within past 5 years (2 years but less than 5 years ago)",
-        "5 or more years ago"
-      ),
-      ordered = TRUE
-    ),
-    
-    # Binarización de CovidPositivo
-    CovidPositivo = factor(
-      case_when(
-        CovidPositivo == "No" ~ "No",
-        str_detect(CovidPositivo, "positive|Yes") ~ "Yes",
-        TRUE ~ NA_character_
-      ),
-      levels = c("No", "Yes")
-    ),
-    
-    # Binarización de VacunaTetanos10Anos
-    VacunaTetanos10Anos = factor(
-      case_when(
-        str_detect(VacunaTetanos10Anos, "^No") ~ "No",
-        str_detect(VacunaTetanos10Anos, "^Yes") ~ "Yes",
-        TRUE ~ NA_character_
-      ),
-      levels = c("No", "Yes")
-    ),
-    
-    # Índice de Comorbilidad (Suma de patologías crónicas excluyendo target)
-    TotalEnfermedades = rowSums(
-      across(c(Ictus, Diabetes, Asma, EPOC, 
-               EnfermedadRenal, Artritis, CancerPiel, TrastornoDepresivo)) == "Yes", 
-      na.rm = TRUE
-    ),
-    
-    # Factores nominales (resto de variables de texto restantes)
+    EnfermedadCardiaca = factor(if_else(InfartoMiocardio == "Yes" | AnginaPecho == "Yes", "Yes", "No"), levels = c("No", "Yes")),
+    Diabetes = factor(case_when(
+      Diabetes %in% c("Yes", "No, pre-diabetes or borderline diabetes") ~ "Yes",
+      Diabetes %in% c("No", "Yes, but only during pregnancy (female)") ~ "No",
+      TRUE ~ NA_character_
+    ), levels = c("No", "Yes")),
+    SaludGeneral = factor(SaludGeneral, levels = c("Poor", "Fair", "Good", "Very good", "Excellent"), ordered = TRUE),
+    GrupoEdad = factor(GrupoEdad, levels = c(
+      "Age 18 to 24", "Age 25 to 29", "Age 30 to 34", "Age 35 to 39", "Age 40 to 44", "Age 45 to 49",
+      "Age 50 to 54", "Age 55 to 59", "Age 60 to 64", "Age 65 to 69", "Age 70 to 74", "Age 75 to 79", "Age 80 or older"
+    ), ordered = TRUE),
+    DientesExtraidos = factor(DientesExtraidos, levels = c("None of them", "1 to 5", "6 or more, but not all", "All"), ordered = TRUE),
+    EstadoFumador = factor(EstadoFumador, levels = c(
+      "Never smoked", "Former smoker", "Current smoker - now smokes some days", "Current smoker - now smokes every day"
+    ), ordered = TRUE),
+    UsoCigarrilloElectronico = factor(UsoCigarrilloElectronico, levels = c(
+      "Never used e-cigarettes in my entire life", "Not at all (right now)", "Use them some days", "Use them every day"
+    ), ordered = TRUE),
+    UltimoChequeoMedico = factor(UltimoChequeoMedico, levels = c(
+      "Within past year (anytime less than 12 months ago)", "Within past 2 years (1 year but less than 2 years ago)",
+      "Within past 5 years (2 years but less than 5 years ago)", "5 or more years ago"
+    ), ordered = TRUE),
+    CovidPositivo = factor(case_when(CovidPositivo == "No" ~ "No", str_detect(CovidPositivo, "positive|Yes") ~ "Yes", TRUE ~ NA_character_), levels = c("No", "Yes")),
+    VacunaTetanos10Anos = factor(case_when(str_detect(VacunaTetanos10Anos, "^No") ~ "No", str_detect(VacunaTetanos10Anos, "^Yes") ~ "Yes", TRUE ~ NA_character_), levels = c("No", "Yes")),
+    TotalEnfermedades = rowSums(across(c(Ictus, Diabetes, Asma, EPOC, EnfermedadRenal, Artritis, CancerPiel, TrastornoDepresivo), ~ .x == "Yes"), na.rm = TRUE),
     across(where(is.character), as.factor)
   )
 
 # Resumen del dataset
 tabla_resumen <- tibble(
-  Métrica = c("Total de Observaciones (Filas)", "Variables Totales", 
-              "Casos con Cardiopatía (Yes)", "Casos sin Cardiopatía (No)", 
-              "Porcentaje de Cardiopatía (%)"),
-  Valor = c(
-    nrow(heart_data),
-    as.character(ncol(heart_data)),
-    sum(heart_data$EnfermedadCardiaca == "Yes", na.rm = TRUE),
-    sum(heart_data$EnfermedadCardiaca == "No", na.rm = TRUE),
-    paste(round(mean(heart_data$EnfermedadCardiaca == "Yes", na.rm = TRUE) * 100, 2), " %")
-  )
+  Métrica = c("Total Observaciones", "Variables Totales", "Casos Cardiopatía (Yes)", "Casos Sin Cardiopatía (No)", "Prevalencia Cardiopatía (%)"),
+  Valor = c(as.character(nrow(heart_data)), as.character(ncol(heart_data)), sum(heart_data$EnfermedadCardiaca == "Yes", na.rm = TRUE),
+            sum(heart_data$EnfermedadCardiaca == "No", na.rm = TRUE), paste(round(mean(heart_data$EnfermedadCardiaca == "Yes", na.rm = TRUE) * 100, 2), "%"))
 )
 
-kable(tabla_resumen, caption = "Dimensiones iniciales y porcentaje de cardiopatías.")
+kable(tabla_resumen, caption = "Dimensiones iniciales y prevalencia de cardiopatías.")
 ```
 
 ## Detección y Corrección de Inconsistencias
@@ -354,46 +206,20 @@ valores especiales, valores numéricos imposibles para las variables y la
 consistencia entre el índice de masa corporal, el peso y la altura.
 
 ```{r deteccion_inconsistencias}
-#Comprobación de valores especiales
-
+# Comprobación de especiales, valores no positivos y consistencia de IMC
 infinitos <- sapply(heart_data %>% select(where(is.numeric)), function(x) sum(is.infinite(x)))
-print("Valores infinitos por variable numérica:")
-print(infinitos)
+menores_cero <- sapply(heart_data %>% select(where(is.numeric)), function(x) sum(x < 0, na.rm = TRUE))
+inconsistencias_bmi <- sum(abs(heart_data$IMC - (heart_data$PesoKilogramos / heart_data$AlturaMetros^2)) > 1.5, na.rm = TRUE)
 
-# Comprobación de valores menores o iguales a cero
-menores_iguales_cero <- sapply(heart_data %>% select(where(is.numeric)), function(x) sum(x <= 0, na.rm = TRUE))
-print("Valores <= 0 por variable:")
-print(menores_iguales_cero)
-
-#En DiasMalaSaludFisica y en DiasMalaSaludMental sí tiene sentido encontrar 
-#iguales a 0
-
-# Calculamos la diferencia entre el BMI registrado y el calculado
-
-# Se usa un margen de tolerancia de 1.5 kg/m^2 porque los datos originales
-# se recogieron en unidades imperiales (libras y pulgadas) y al convertirlos
-# a metros y kilogramos se acumulan errores de redondeo de hasta +-1.2 puntos.
-# Una diferencia superior a 1.5 indica un error real de incoherencia.
-
-bmi_calculado <- heart_data$PesoKilogramos / (heart_data$AlturaMetros^2)
-diferencia_bmi <- abs(heart_data$IMC - bmi_calculado)
-inconsistencias_bmi <- sum(diferencia_bmi > 1.5, na.rm = TRUE)
-
-print(paste("Número de registros con BMI inconsistente respecto a peso/altura:", inconsistencias_bmi))
-
-# Corrección de inconsistencias
-
-# Sustituimos por NA valores biológicamente imposibles:
-# - Horas de sueño: dormir <= 2h o >= 20h de forma continuada es anómalo/error
-#   de encuesta
-# - Alturas inferiores a 1 metro en adultos
-
+# Corrección de inconsistencias biológicas imposibles a NA
 heart_data <- heart_data %>%
   mutate(
-    HorasSueno = ifelse(HorasSueno <= 2 | HorasSueno >= 20, NA, HorasSueno),
-    AlturaMetros = ifelse(AlturaMetros < 1.0, NA, AlturaMetros)
+    HorasSueno = if_else(HorasSueno <= 2 | HorasSueno >= 20, NA_real_, HorasSueno),
+    AlturaMetros = if_else(AlturaMetros < 1.0, NA_real_, AlturaMetros)
   )
 ```
+
+Tras la verificación, se comprobó la ausencia de valores infinitos y de valores negativos imposibles en las variables numéricas (constatando que únicamente `DiasMalaSaludFisica` y `DiasMalaSaludMental` presentan valores 0 válidos). Asimismo, no se detectaron discrepancias entre el IMC y el cociente peso/altura fuera del margen de tolerancia de 1.5 $kg/m^2$ atribuible al redondeo de unidades imperiales. Se sustituyeron por `NA` los valores biológicamente anómalos: horas de sueño $\le 2$ o $\ge 20$ y estaturas de adultos inferiores a 1 metro.
 
 ## Valores Perdidos y Observaciones Completas
 
@@ -436,76 +262,32 @@ los umbrales que definen los valores típicos para decidir como tratar a
 los valores extremos.
 
 ```{r deteccion_outliers}
-# 1. Definición de las 4 funciones de detección
+# Definición de reglas univariantes
+reglasigma     <- function(x) abs(x - mean(x, na.rm = TRUE)) > 3 * sd(x, na.rm = TRUE)
+reglahampel    <- function(x) abs(x - median(x, na.rm = TRUE)) > 3 * (1.4826 * median(abs(x - median(x, na.rm = TRUE)), na.rm = TRUE))
+reglaboxplot   <- function(x) { q <- quantile(x, c(0.25, 0.75), na.rm = TRUE); x < q[1] - 1.5 * diff(q) | x > q[2] + 1.5 * diff(q) }
+reglapercentil <- function(x) { p <- quantile(x, c(0.05, 0.95), na.rm = TRUE); x < p[1] | x > p[2] }
 
-# Regla 3 Sigma
-reglasigma <- function(x) {
-  media <- mean(x, na.rm = TRUE)
-  desviacion <- sd(x, na.rm = TRUE)
-  abs(x - media) > 3 * desviacion
-}
-
-# Identificador Hampel
-reglahampel <- function(x) {
-  mediana <- median(x, na.rm = TRUE)
-  mad <- 1.4826 * median(abs(x - mediana), na.rm = TRUE)
-  abs(x - mediana) > 3 * mad
-}
-
-# Regla Boxplot
-reglaboxplot <- function(x) {
-  q1 <- quantile(x, 0.25, na.rm = TRUE)
-  q3 <- quantile(x, 0.75, na.rm = TRUE)
-  iqr <- q3 - q1
-  (x < q1 - 1.5 * iqr) | (x > q3 + 1.5 * iqr)
-}
-
-# Percentiles (5% - 95%)
-reglapercentil <- function(x) {
-  p05 <- quantile(x, 0.05, na.rm = TRUE)
-  p95 <- quantile(x, 0.95, na.rm = TRUE)
-  (x < p05) | (x > p95)
-}
-
-# Aplicación de las reglas sobre el IMC
+# Clasificación de outliers sobre IMC
 heart_outliers <- heart_data %>%
-  mutate(
-    IMC_Sigma     = reglasigma(IMC),
-    IMC_Hampel    = reglahampel(IMC),
-    IMC_Boxplot   = reglaboxplot(IMC),
-    IMC_Percentil = reglapercentil(IMC)
-  )
+  mutate(IMC_Sigma = reglasigma(IMC), IMC_Hampel = reglahampel(IMC),
+         IMC_Boxplot = reglaboxplot(IMC), IMC_Percentil = reglapercentil(IMC))
 
-# Cálculo de umbrales y tabla comparativa
-media_imc <- mean(heart_data$IMC, na.rm = TRUE)
-sd_imc    <- sd(heart_data$IMC, na.rm = TRUE)
-med_imc   <- median(heart_data$IMC, na.rm = TRUE)
-mad_imc   <- 1.4826 * median(abs(heart_data$IMC - med_imc), na.rm = TRUE)
-q1_imc    <- quantile(heart_data$IMC, 0.25, na.rm = TRUE)
-q3_imc    <- quantile(heart_data$IMC, 0.75, na.rm = TRUE)
-iqr_imc   <- q3_imc - q1_imc
-p05_imc   <- quantile(heart_data$IMC, 0.05, na.rm = TRUE)
-p95_imc   <- quantile(heart_data$IMC, 0.95, na.rm = TRUE)
+# Umbrales y comparativa de métodos
+m_imc <- mean(heart_data$IMC, na.rm = TRUE); s_imc <- sd(heart_data$IMC, na.rm = TRUE)
+med_imc <- median(heart_data$IMC, na.rm = TRUE); mad_imc <- 1.4826 * median(abs(heart_data$IMC - med_imc), na.rm = TRUE)
+q_imc <- quantile(heart_data$IMC, c(0.25, 0.75), na.rm = TRUE); p_imc <- quantile(heart_data$IMC, c(0.05, 0.95), na.rm = TRUE)
 
 tabla_outliers <- tibble(
   Método = c("Regla 3 Sigma", "Identificador Hampel", "Regla Boxplot", "Percentiles (5% - 95%)"),
-  Outliers_Detectados = c(
-    sum(heart_outliers$IMC_Sigma, na.rm = TRUE),
-    sum(heart_outliers$IMC_Hampel, na.rm = TRUE),
-    sum(heart_outliers$IMC_Boxplot, na.rm = TRUE),
-    sum(heart_outliers$IMC_Percentil, na.rm = TRUE)
-  ),
-  Porcentaje = paste(round(c(
-    mean(heart_outliers$IMC_Sigma, na.rm = TRUE),
-    mean(heart_outliers$IMC_Hampel, na.rm = TRUE),
-    mean(heart_outliers$IMC_Boxplot, na.rm = TRUE),
-    mean(heart_outliers$IMC_Percentil, na.rm = TRUE)
-  ) * 100, 2), "%"),
-  Umbral_Inferior = round(c(media_imc - 3 * sd_imc, med_imc - 3 * mad_imc, q1_imc - 1.5 * iqr_imc, p05_imc), 2),
-  Umbral_Superior = round(c(media_imc + 3 * sd_imc, med_imc + 3 * mad_imc, q3_imc + 1.5 * iqr_imc, p95_imc), 2)
+  Outliers_Detectados = c(sum(heart_outliers$IMC_Sigma, na.rm = TRUE), sum(heart_outliers$IMC_Hampel, na.rm = TRUE),
+                         sum(heart_outliers$IMC_Boxplot, na.rm = TRUE), sum(heart_outliers$IMC_Percentil, na.rm = TRUE)),
+  Porcentaje = paste(round(c(mean(heart_outliers$IMC_Sigma, na.rm = TRUE), mean(heart_outliers$IMC_Hampel, na.rm = TRUE),
+                             mean(heart_outliers$IMC_Boxplot, na.rm = TRUE), mean(heart_outliers$IMC_Percentil, na.rm = TRUE)) * 100, 2), "%"),
+  Umbral_Inferior = round(c(m_imc - 3 * s_imc, med_imc - 3 * mad_imc, q_imc[1] - 1.5 * diff(q_imc), p_imc[1]), 2),
+  Umbral_Superior = round(c(m_imc + 3 * s_imc, med_imc + 3 * mad_imc, q_imc[2] + 1.5 * diff(q_imc), p_imc[2]), 2)
 )
-
-kable(tabla_outliers, caption = "Comparativa de métodos de detección de outliers y umbrales en la variable IMC.")
+kable(tabla_outliers, caption = "Comparativa de métodos de detección de outliers y umbrales en IMC.")
 ```
 
 **La regla 3 Sigma es poco agresiva:** fija el umbral superior en 48.21,
@@ -536,7 +318,7 @@ volumen de más de 400.000 observaciones, se utiliza una muestra
 aleatoria representativa de 5.000 observaciones con set.seed(123) y se
 aplica dispersión aleatoria con transparencia.
 
-```{r grafico_outliers, fig.cap="Detección de outliers en IMC según cada método implementado.\\label{fig:outliers_imc}"}
+```{r grafico_outliers, fig.cap="Detección de outliers en IMC según cada método implementado", fig.width=6, fig.height=2.3, out.width="75%"}
 # Preparación de datos
 set.seed(123)
 
@@ -589,25 +371,16 @@ valores típicos (7 horas de sueño y 0 días de enfermedad), se imputan
 mediante su mediana.
 
 ```{r imputacion_datos}
-# Imputación de medidas por Sexoç
-
+# Imputación por Sexo (antropometría) y por Mediana (descanso y salud percibida)
 heart_data <- heart_data %>%
   group_by(Sexo) %>%
   mutate(
-    AlturaMetros   = ifelse(is.na(AlturaMetros), mean(AlturaMetros, na.rm = TRUE), AlturaMetros),
-    PesoKilogramos = ifelse(is.na(PesoKilogramos), mean(PesoKilogramos, na.rm = TRUE), PesoKilogramos),
-    IMC            = ifelse(is.na(IMC), mean(IMC, na.rm = TRUE), IMC)
+    AlturaMetros   = coalesce(AlturaMetros, mean(AlturaMetros, na.rm = TRUE)),
+    PesoKilogramos = coalesce(PesoKilogramos, mean(PesoKilogramos, na.rm = TRUE)),
+    IMC            = coalesce(IMC, mean(IMC, na.rm = TRUE))
   ) %>%
-  ungroup()
-
-# Imputación de descanso y salud percibida por la mediana
-
-heart_data <- heart_data %>%
-  mutate(
-    HorasSueno          = ifelse(is.na(HorasSueno), median(HorasSueno, na.rm = TRUE), HorasSueno),
-    DiasMalaSaludFisica = ifelse(is.na(DiasMalaSaludFisica), median(DiasMalaSaludFisica, na.rm = TRUE), DiasMalaSaludFisica),
-    DiasMalaSaludMental = ifelse(is.na(DiasMalaSaludMental), median(DiasMalaSaludMental, na.rm = TRUE), DiasMalaSaludMental)
-  )
+  ungroup() %>%
+  mutate(across(c(HorasSueno, DiasMalaSaludFisica, DiasMalaSaludMental), ~ coalesce(.x, median(.x, na.rm = TRUE))))
 ```
 
 Tras el proceso de imputación, todas las variables numéricas continuas y
@@ -1344,6 +1117,7 @@ Authors should discuss the results and how they can be interpreted in
 perspective of previous studies and of the working hypotheses. The
 findings and their implications should be discussed in the broadest
 context possible. Future research directions may also be highlighted.
+
 
 # Conclusión
 
