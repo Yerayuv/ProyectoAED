@@ -394,7 +394,9 @@ heart_data <- heart_data %>%
 ```
 
 ## Valores Perdidos y Observaciones Completas
-A continuación se cuantifica el volumen de valores perdidos presentes en las variables y se evalúa la proporción de casos completos.
+
+A continuación se cuantifica el volumen de valores perdidos presentes en
+las variables y se evalúa la proporción de casos completos.
 
 ```{r valores_perdidos}
 # Cálculo de NAs por columna
@@ -412,8 +414,14 @@ tabla_nas <- tibble(
 
 kable(head(tabla_nas, 5), caption = "Variables con mayor proporción de valores perdidos.")
 ```
-El análisis de casos completos revela que 277.447 observaciones (el 62.33% del total) carecen de valores perdidos en la totalidad de sus campos. Descartar las filas incompletas mediante un filtrado global supondría desechar casi un 38% de la muestra (asociado a preguntas optativas de inmunización o chequeos). Por tanto, se conservan las observaciones para el análisis general y se aplican procedimientos de imputación en las variables clave.
 
+El análisis de casos completos revela que 277.447 observaciones (el
+62.33% del total) carecen de valores perdidos en la totalidad de sus
+campos. Descartar las filas incompletas mediante un filtrado global
+supondría desechar casi un 38% de la muestra (asociado a preguntas
+optativas de inmunización o chequeos). Por tanto, se conservan las
+observaciones para el análisis general y se aplican procedimientos de
+imputación en las variables clave.
 
 ## Detección Univariante de Outliers y Comparativa de Métodos
 
