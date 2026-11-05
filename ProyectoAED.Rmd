@@ -616,10 +616,10 @@ son puntos aislados ni errores tipográficos, sino una nube continua que
 se extiende hasta valores extremos, confirmando que se trata de
 individuos con obesidad severa real que deben conservarse en la muestra.
 
--   **Comparativa de cortes:** La regla 3 Sigma deja una franja alta de
-    puntos clasificados como normales (debido a la varianza inflada),
-    mientras que la regla del Boxplot y el identificador Hampel capturan
-    de forma equilibrada la masa de valores atípicos.
+- **Comparativa de cortes:** La regla 3 Sigma deja una franja alta de
+  puntos clasificados como normales (debido a la varianza inflada),
+  mientras que la regla del Boxplot y el identificador Hampel capturan
+  de forma equilibrada la masa de valores atípicos.
 
 ## Imputación de Variables Numéricas
 
@@ -672,26 +672,26 @@ análisis bivariante y multivariante.
 Para dar respuesta a las preguntas planteadas, estudiaremos el conjunto
 de datos en dos etapas:
 
--   **Análisis Univariante:** Se examinará de forma individual la
-    distribución y el comportamiento de cada variable del conjunto de
-    datos. En el caso de las variables cuantitativas, se calculará
-    estadísticos de tendencia central (media y mediana) y de dispersión
-    clásicos y robustos (desviación típica, rango intercuartílico y
-    MADM). Su representación visual se realizará mediante histogramas y
-    gráficos de densidad, evaluando la normalidad de las distribuciones
-    a través de QQ-plots. Las variables cualitativas y factores se
-    caracterizarán mediante distribuciones de frecuencias absolutas y
-    relativas, apoyadas en diagramas de barras.
--   **Análisis Bivariante:** **:**Se estudiarán las relaciones entre
-    variables adaptando la técnica a su naturaleza. Para variables
-    categóricas se utilizarán tablas de contingencia, la prueba de
-    $\chi^2$ y la V de Cramér. En el caso de variables ordinales y
-    cuantitativas no normales, se emplearán la correlación de Spearman y
-    contrastes no paramétricos como Kruskal-Wallis y Wilcoxon,
-    complementados con *boxplots cuando se requieran*. Dado el elevado
-    tamaño muestral ($N > 10^5$), la interpretación se centrará en el
-    tamaño del efecto más que en la significación de los $p$-valores,
-    pero los test se efectuaran igualmente.
+- **Análisis Univariante:** Se examinará de forma individual la
+  distribución y el comportamiento de cada variable del conjunto de
+  datos. En el caso de las variables cuantitativas, se calculará
+  estadísticos de tendencia central (media y mediana) y de dispersión
+  clásicos y robustos (desviación típica, rango intercuartílico y MADM).
+  Su representación visual se realizará mediante histogramas y gráficos
+  de densidad, evaluando la normalidad de las distribuciones a través de
+  QQ-plots. Las variables cualitativas y factores se caracterizarán
+  mediante distribuciones de frecuencias absolutas y relativas, apoyadas
+  en diagramas de barras.
+- **Análisis Bivariante:** **:**Se estudiarán las relaciones entre
+  variables adaptando la técnica a su naturaleza. Para variables
+  categóricas se utilizarán tablas de contingencia, la prueba de
+  $\chi^2$ y la V de Cramér. En el caso de variables ordinales y
+  cuantitativas no normales, se emplearán la correlación de Spearman y
+  contrastes no paramétricos como Kruskal-Wallis y Wilcoxon,
+  complementados con *boxplots cuando se requieran*. Dado el elevado
+  tamaño muestral ($N > 10^5$), la interpretación se centrará en el
+  tamaño del efecto más que en la significación de los $p$-valores, pero
+  los test se efectuaran igualmente.
 
 # Resultados
 
@@ -786,33 +786,32 @@ kable(estadisticos_num, caption = "Estadísticos descriptivos y de forma para va
 
 Al observar la tabla nos damos cuenta de varias cosas:
 
--   En `DiasMalaSaludFisica` y `DiasMalaSaludMental`, la mediana y el
-    MADM son 0 (la mayoría de los individuos dicen no tener días de
-    enfermedad, como habíamos visto), mientras que la media se sitúa en
-    torno a 4 días con una desviación típica de más de 8 días,
-    claramente inflada por los individuos con patologías crónicas graves
-    (30 días).
+- En `DiasMalaSaludFisica` y `DiasMalaSaludMental`, la mediana y el MADM
+  son 0 (la mayoría de los individuos dicen no tener días de enfermedad,
+  como habíamos visto), mientras que la media se sitúa en torno a 4 días
+  con una desviación típica de más de 8 días, claramente inflada por los
+  individuos con patologías crónicas graves (30 días).
 
--   En el `IMC` y el `PesoKilogramos`, la media es superior a la mediana
-    debido a la presencia de casos con obesidad severa en la cola
-    superior de la distribución.
+- En el `IMC` y el `PesoKilogramos`, la media es superior a la mediana
+  debido a la presencia de casos con obesidad severa en la cola superior
+  de la distribución.
 
--   La variable `NumeroEnfermedades` es numérica pero es basicamente un
-    factor, ya que hay poco rango de enfermedades que se pueden padecer.
-    El valor medio y mediano ronda 1 enfermedad por persona pero su
-    distribución no merece la pena representarse gráficamente por ahora.
+- La variable `NumeroEnfermedades` es numérica pero es basicamente un
+  factor, ya que hay poco rango de enfermedades que se pueden padecer.
+  El valor medio y mediano ronda 1 enfermedad por persona pero su
+  distribución no merece la pena representarse gráficamente por ahora.
 
--   En cuanto al sesgo, como cabría esperar, las variables más
-    asimétricas son las que más sesgo tienen. Además, vemos que `IMC`
-    tiene un sesgo no despreciable, lo que sugiere que la distribución
-    quizás no es normal.
+- En cuanto al sesgo, como cabría esperar, las variables más asimétricas
+  son las que más sesgo tienen. Además, vemos que `IMC` tiene un sesgo
+  no despreciable, lo que sugiere que la distribución quizás no es
+  normal.
 
--   La curtosis nos revela también que las colas de `IMC` y de
-    `HorasSueno` son demasiado anchas, así que probablemente no nos
-    encontramos ante distribuciones normales.
+- La curtosis nos revela también que las colas de `IMC` y de
+  `HorasSueno` son demasiado anchas, así que probablemente no nos
+  encontramos ante distribuciones normales.
 
--   `AlturaMetros` sí parece seguir algo parecido a una normal debido a
-    su curtosis y sesgo.
+- `AlturaMetros` sí parece seguir algo parecido a una normal debido a su
+  curtosis y sesgo.
 
 Como último paso para este tipo de variables vamos a comprobar la
 normalidad con Q-Q plots, ya que los test de normalidad se ven muy
@@ -950,19 +949,19 @@ heart_data %>%
 
 De esta manera, el análisis de cada grupo se vuelve más fácil.
 
--   Los hábitos de vida son solo 2, así que solo podemos comentar que
-    son variables muy balanceadas.
+- Los hábitos de vida son solo 2, así que solo podemos comentar que son
+  variables muy balanceadas.
 
--   Las patologías tienden a ser más raras y por tanto conviene llevar
-    cuidado con el desbalanceo de clases.
+- Las patologías tienden a ser más raras y por tanto conviene llevar
+  cuidado con el desbalanceo de clases.
 
--   El tercer gráfico correspondiente a la atención médica y
-    prevenciones detaca que volvemos a tener variables más o menos
-    balanceadas exceptuando `ConductaAltoRiesgo`.
+- El tercer gráfico correspondiente a la atención médica y prevenciones
+  detaca que volvemos a tener variables más o menos balanceadas
+  exceptuando `ConductaAltoRiesgo`.
 
--   Por último exploramos las variables que expresan las dificultades en
-    distintos ámbitos de la vida, que por supuesto son variables
-    bastante desbalanceadas a favor del no.
+- Por último exploramos las variables que expresan las dificultades en
+  distintos ámbitos de la vida, que por supuesto son variables bastante
+  desbalanceadas a favor del no.
 
 Por último, conviene destacar que al igual que con diabetes alguna
 variable podría perder algo de información para volverse binaria y
