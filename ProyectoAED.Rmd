@@ -123,7 +123,24 @@ sociodemográficas y antecedentes clínicos.
 
 ## Diccionario de Variables
 
-Las 40 variables del estudio se estructuran en seis dimensiones clínicas: **1) Sociodemográficas:** `Estado`, `Sexo`, `GrupoEdad` (13 tramos quinquenales) y `RazaEtnia`. **2) Antropométricas y salud física:** `AlturaMetros`, `PesoKilogramos`, `IMC` y percepción de salud (`SaludGeneral`, `DiasMalaSaludFisica`, `DiasMalaSaludMental`). **3) Hábitos de vida:** `HorasSueno`, `ActividadFisica`, `EstadoFumador`, `UsoCigarrilloElectronico` y `ConsumidorAlcohol`. **4) Patologías y comorbilidades:** `InfartoMiocardio`, `AnginaPecho`, `Ictus`, `Diabetes`, `Asma`, `EPOC`, `EnfermedadRenal`, `Artritis`, `CancerPiel` y `TrastornoDepresivo`. **5) Limitaciones funcionales:** `DientesExtraidos` y dificultades en la vida diaria (`DificultadAuditiva`, `Visual`, `Concentracion`, `Caminar`, `VestirseBanarse`, `TareasDiarias`). **6) Prevención y vacunas:** `UltimoChequeoMedico`, `TomografiaTorax`, `PruebaVIH`, `VacunaGripeUltimoAno`, `VacunaNeumococo`, `VacunaTetanos10Anos`, `ConductaAltoRiesgo` y `CovidPositivo`. Como variable objetivo derivada se define `EnfermedadCardiaca` (diagnóstico positivo en infarto o angina).
+Las 40 variables del estudio se estructuran en seis dimensiones
+clínicas: **1) Sociodemográficas:** `Estado`, `Sexo`, `GrupoEdad` (13
+tramos quinquenales) y `RazaEtnia`. **2) Antropométricas y salud
+física:** `AlturaMetros`, `PesoKilogramos`, `IMC` y percepción de salud
+(`SaludGeneral`, `DiasMalaSaludFisica`, `DiasMalaSaludMental`). **3)
+Hábitos de vida:** `HorasSueno`, `ActividadFisica`, `EstadoFumador`,
+`UsoCigarrilloElectronico` y `ConsumidorAlcohol`. **4) Patologías y
+comorbilidades:** `InfartoMiocardio`, `AnginaPecho`, `Ictus`,
+`Diabetes`, `Asma`, `EPOC`, `EnfermedadRenal`, `Artritis`, `CancerPiel`
+y `TrastornoDepresivo`. **5) Limitaciones funcionales:**
+`DientesExtraidos` y dificultades en la vida diaria
+(`DificultadAuditiva`, `Visual`, `Concentracion`, `Caminar`,
+`VestirseBanarse`, `TareasDiarias`). **6) Prevención y vacunas:**
+`UltimoChequeoMedico`, `TomografiaTorax`, `PruebaVIH`,
+`VacunaGripeUltimoAno`, `VacunaNeumococo`, `VacunaTetanos10Anos`,
+`ConductaAltoRiesgo` y `CovidPositivo`. Como variable objetivo derivada
+se define `EnfermedadCardiaca` (diagnóstico positivo en infarto o
+angina).
 
 ## Ingesta y Tipado de Variables
 
@@ -219,7 +236,14 @@ heart_data <- heart_data %>%
   )
 ```
 
-Tras la verificación, se comprobó la ausencia de valores infinitos y de valores negativos imposibles en las variables numéricas (constatando que únicamente `DiasMalaSaludFisica` y `DiasMalaSaludMental` presentan valores 0 válidos). Asimismo, no se detectaron discrepancias entre el IMC y el cociente peso/altura fuera del margen de tolerancia de 1.5 $kg/m^2$ atribuible al redondeo de unidades imperiales. Se sustituyeron por `NA` los valores biológicamente anómalos: horas de sueño $\le 2$ o $\ge 20$ y estaturas de adultos inferiores a 1 metro.
+Tras la verificación, se comprobó la ausencia de valores infinitos y de
+valores negativos imposibles en las variables numéricas (constatando que
+únicamente `DiasMalaSaludFisica` y `DiasMalaSaludMental` presentan
+valores 0 válidos). Asimismo, no se detectaron discrepancias entre el
+IMC y el cociente peso/altura fuera del margen de tolerancia de 1.5
+$kg/m^2$ atribuible al redondeo de unidades imperiales. Se sustituyeron
+por `NA` los valores biológicamente anómalos: horas de sueño $\le 2$ o
+$\ge 20$ y estaturas de adultos inferiores a 1 metro.
 
 ## Valores Perdidos y Observaciones Completas
 
@@ -384,7 +408,12 @@ heart_data <- heart_data %>%
   drop_na()
 ```
 
-Tras el proceso de imputación de las variables cuantitativas y el filtrado de observaciones completas en los registros categóricos restantes, el conjunto de datos final cuenta con 267.281 observaciones y cero valores perdidos en la totalidad de sus 40 variables, quedando perfectamente acondicionado para los análisis univariante, bivariante y multivariante.
+Tras el proceso de imputación de las variables cuantitativas y el
+filtrado de observaciones completas en los registros categóricos
+restantes, el conjunto de datos final cuenta con 267.281 observaciones y
+cero valores perdidos en la totalidad de sus 40 variables, quedando
+perfectamente acondicionado para los análisis univariante, bivariante y
+multivariante.
 
 ## 2.10. Estrategia de Análisis Estadístico
 
@@ -1031,8 +1060,6 @@ tomografías hechas tienen mayor proporción de cardiopatías. Lo mismo
 pasa con diabetes y con ictus pero al tener clases tan desbalanceadas
 cuesta mucho más visualizarlo.
 
-## Análisis Multivariante
-
 ## Extracción de Características - PCA
 
 En el marco del análisis exploratorio de datos, una práctica habitual es
@@ -1064,7 +1091,14 @@ espacio original de variables explicativas, garantizando que los futuros
 modelos predictivos mantengan intacto el significado biológico de los
 datos y resulten completamente transparentes para el personal médico.
 
-# mapa eeuu
+## Distribución Geográfica y Prevalencia por Estado
+
+Con el fin de determinar si el riesgo cardiovascular se distribuye
+homogéneamente en el territorio de Estados Unidos, se calcula la tasa de
+prevalencia de cardiopatías en cada estado a partir de los datos
+recopilados. Esta representación geográfica facilita la detección de
+disparidades territoriales significativas y zonas de concentración de
+riesgo.
 
 ```{r}
 #Cálculo de la prevalencia de cardiopatías por estado
@@ -1116,7 +1150,6 @@ Authors should discuss the results and how they can be interpreted in
 perspective of previous studies and of the working hypotheses. The
 findings and their implications should be discussed in the broadest
 context possible. Future research directions may also be highlighted.
-
 
 # Conclusión
 
