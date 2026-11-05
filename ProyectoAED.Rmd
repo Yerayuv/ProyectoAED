@@ -394,21 +394,14 @@ heart_data <- heart_data %>%
 ```
 
 ## Valores Perdidos y Observaciones Completas
-
-A continuación se cuantifica el número y porcentaje de valores perdidos
-presentes en las variables y se evalúa el volumen de observaciones
-completas.
+A continuación se cuantifica el volumen de valores perdidos presentes en las variables y se evalúa la proporción de casos completos.
 
 ```{r valores_perdidos}
-# Número y porcentaje de NAs por columna
-
+# Cálculo de NAs por columna
 nas_columna <- colSums(is.na(heart_data))
-nas_columna
-
 pct_nas <- round((nas_columna / nrow(heart_data)) * 100, 2)
-pct_nas
 
-# Tabla con las variables que presentan valores perdidos (ordenadas de mayor a menor)
+# Tabla maquetada con las 5 variables de mayor volumen de NAs
 tabla_nas <- tibble(
   Variable = names(nas_columna),
   Num_NAs = nas_columna,
@@ -417,61 +410,10 @@ tabla_nas <- tibble(
   filter(Num_NAs > 0) %>%
   arrange(desc(Num_NAs))
 
-# Mostramos las 10 variables con mayor volumen de NAs
-head(tabla_nas, 10)
-
-# Observaciones completas
-num_completas <- sum(complete.cases(heart_data))
-pct_completas <- round((num_completas / nrow(heart_data)) * 100, 2)
-
-print(paste("Número de observaciones completas:", num_completas))
-print(paste("Porcentaje de observaciones completas:", pct_completas, "%"))
+kable(head(tabla_nas, 5), caption = "Variables con mayor proporción de valores perdidos.")
 ```
+El análisis de casos completos revela que 277.447 observaciones (el 62.33% del total) carecen de valores perdidos en la totalidad de sus campos. Descartar las filas incompletas mediante un filtrado global supondría desechar casi un 38% de la muestra (asociado a preguntas optativas de inmunización o chequeos). Por tanto, se conservan las observaciones para el análisis general y se aplican procedimientos de imputación en las variables clave.
 
-A diferencia de análisis sobre muestras pequeñas donde se eliminan todas
-las filas incompletas, en este caso descartar observaciones con algún
-valor perdido supondría perder un porcentaje demasiado alto de los
-pacientes (principalmente por no haber contestado a preguntas
-secundarias como la vacunación o la prueba de VIH). Por tanto, se
-conservan las observaciones para el análisis general y se aplicarán
-métodos de imputación.
-
-## Estadísticos Descriptivos
-
-Se analiza la influencia de los valores extremos sobrelas variables
-numéricas. Para ello, se calculan estadísticos clásicos sensibles a
-valores atípicos (media y desviación típica) y se contrastan con
-estimadores robustos (mediana, MADM e IQR).
-
-```{r estadisticos_descriptivos}
-# Función MADM robusta a NAs
-madm <- function(x, na.rm = TRUE) {
-  1.4826 * median(abs(x - median(x, na.rm = TRUE)), na.rm = TRUE)
-}
-
-# Cálculo de estadísticos para cada variable numérica
-estadisticos_num <- heart_data %>%
-  select(where(is.numeric)) %>%
-  pivot_longer(
-    cols = everything(), 
-    names_to = "Variable", 
-    values_to = "Valor"
-  ) %>%
-  group_by(Variable) %>%
-  summarise(
-    Media   = round(mean(Valor, na.rm = TRUE), 2),
-    SD      = round(sd(Valor, na.rm = TRUE), 2),
-    Mediana = round(median(Valor, na.rm = TRUE), 2),
-    MADM    = round(madm(Valor, na.rm = TRUE), 2),
-    IQR     = round(IQR(Valor, na.rm = TRUE), 2)
-  )
-
-kable(estadisticos_num, caption = "Comparativa de estadísticos clásicos y robustos en variables numéricas.")
-```
-
-Por ahora no vamos a analizar estos valores ya que esto se hará en el
-análisis de resultados, pero conocer estos valores es necesario para la
-posterior detección de outliers.
 
 ## Detección Univariante de Outliers y Comparativa de Métodos
 
@@ -656,11 +598,6 @@ heart_data <- heart_data %>%
     DiasMalaSaludFisica = ifelse(is.na(DiasMalaSaludFisica), median(DiasMalaSaludFisica, na.rm = TRUE), DiasMalaSaludFisica),
     DiasMalaSaludMental = ifelse(is.na(DiasMalaSaludMental), median(DiasMalaSaludMental, na.rm = TRUE), DiasMalaSaludMental)
   )
-# Comprobación final de NAs restantes en variables numéricas
-
-nas_numericas_final <- sapply(heart_data %>% select(where(is.numeric)), function(x) sum(is.na(x)))
-print("NAs restantes en variables numéricas tras la imputación:")
-print(nas_numericas_final)
 ```
 
 Tras el proceso de imputación, todas las variables numéricas continuas y
