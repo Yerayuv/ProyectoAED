@@ -1124,7 +1124,6 @@ el test de Spearman.
 ```{r}
 kruskal.test(DiasMalaSaludFisica ~ SaludGeneral, data = heart_data)
 cor.test(as.numeric(heart_data$SaludGeneral), heart_data$DiasMalaSaludFisica, method = "spearman")
-
 kruskal.test(DiasMalaSaludMental ~ SaludGeneral, data = heart_data)
 cor.test(as.numeric(heart_data$SaludGeneral), heart_data$DiasMalaSaludMental, method = "spearman")
 ```
@@ -1145,7 +1144,6 @@ Spearman para identificar la intensidad de la relación.
 
 ```{r}
 wilcox.test(DiasMalaSaludMental ~ TrastornoDepresivo, data = heart_data)
-
 cor.test(as.numeric(heart_data$TrastornoDepresivo), heart_data$DiasMalaSaludMental, method = "spearman")
 ```
 
@@ -1176,6 +1174,144 @@ trabajar resulta más útil quitar variables redundantes o generar nuevas
 variables que pueden resumir mejor la información.
 
 ### Relación con la variable objetivo
+
+Ahora estudiaremos la relación de todas las variables con la variable
+objetivo. Para ello, nos serviremos de el valor que nos devuelve
+Spearman (en valor absoluto) y V de Cramer, que aunque no sea lo mismo,
+es comparable, ya que no podemos hacer el mismo test para distintos
+tipos de variables. Con esto, tendremos las distintas columnas ordenadas
+en cierta medida por orden de influencia en la target.
+
+```{r}
+predictors <- names(heart_data)[-c(10,11,41)] 
+influencia <- c()
+for (var in predictors) {
+  x <- heart_data[[var]]
+  y <- heart_data[['EnfermedadCardiaca']]
+  if (is.numeric(x) || is.ordered(x)) {
+    spearman_res <- suppressWarnings(cor.test(as.numeric(x), as.numeric(y), method = "spearman"))
+    influencia[var] <- abs(spearman_res$estimate)} 
+  else {
+    tabla <- table(x, y)
+    cramer_res <- assocstats(tabla)$cramer
+    influencia[var] <- cramer_res}}
+influencia_ordenada <- sort(influencia, decreasing = TRUE)
+print(influencia_ordenada)
+```
+
+Vemos como variables como la edad o el número de enfermedades son las
+que más influyen, mientras que horas de sueño y los días de mala salud
+mental son las que menos influyen a priori.
+
+Variables que sorprende encontrar con coeficientes altos son la
+tomografía, aunque es posible que tenga que ver con pruebas posteriores
+a la detección de la enfermedad, salud general porque es algo subjetivo,
+dientes extraidos porque parece no tener nada que ver, o incluso
+enfermedades particulares como diabetes que puede que alguno no se
+espere que sea tan influyente.
+
+Respecto a las más bajas sorprende ver a las variables relacionadas con
+la salud mental tan bajas, a su vez que el vaper también está de las
+menos influyentes. Por último destacar también que el IMC se encuentra
+sorpresivamente bajo.
+
+Dicho esto, vamos a hacer algunos boxplots, gráficos de barras y heat
+maps para representar algunas de estas variables, ya sean las más
+influyentes o las menos, para visualizar los datos.
+
+```{r boxplots-cuantitativas, echo=TRUE, warning=FALSE, message=FALSE}
+p1<-ggplot(heart_data, aes(x = EnfermedadCardiaca, y = HorasSueno, fill = EnfermedadCardiaca)) +
+  geom_boxplot(alpha = 0.7, outlier.alpha = 0.2, outlier.size = 1) +
+  labs(title = "Horas de Sueño",
+    x = "Enfermedad Cardíaca",y = "Horas de Sueño") +theme_minimal() +
+  theme(legend.position = "none", plot.title = element_text(face = "bold"))
+p2<-ggplot(heart_data, aes(x = EnfermedadCardiaca, y = TotalEnfermedades, fill = EnfermedadCardiaca)) +
+  geom_boxplot(alpha = 0.7, outlier.alpha = 0.2, outlier.size = 1) +
+  labs(title = "Enfermedades Totales",x = "Enfermedad Cardíaca",
+    y = "Número Total de Comorbilidades") +theme_minimal() +
+  theme(legend.position = "none", plot.title = element_text(face = "bold"))
+p1 + p2
+```
+
+En estos dos boxplots se ve claramente como el factor de tener o no
+enfermedad cardiaca condiciona (en el caso de las enfermedades) o no (en
+el caso del sueño) la media del subgrupo generado por la cardiopatía.
+
+Ahora vamos con algunos gráficos de barras.
+
+```{r barplots-2x2, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10, fig.height=8}
+p1 <- ggplot(heart_data, aes(x = SaludGeneral, fill = EnfermedadCardiaca)) +
+  geom_bar(position = "fill", alpha = 0.8) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "Salud General", x = NULL, y = "Proporción") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 9),
+        plot.title = element_text(face = "bold", size = 11))
+p2 <- ggplot(heart_data, aes(x = GrupoEdad, fill = EnfermedadCardiaca)) +
+  geom_bar(position = "fill", alpha = 0.8) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "Grupo de Edad", x = NULL, y = NULL) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 9),
+        plot.title = element_text(face = "bold", size = 11))
+heart_data$SaludMentalBinned <- cut(
+  heart_data$DiasMalaSaludMental, 
+  breaks = c(-1, 0, 5, 15, 30), 
+  labels = c("0 días", "1-5 días", "6-15 días", "16-30 días")
+)
+p3 <- ggplot(heart_data, aes(x = SaludMentalBinned, fill = EnfermedadCardiaca)) +geom_bar(position = "fill", alpha = 0.8) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "Días de Mala Salud Mental", x = NULL, y = "Proporción") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 9),
+        plot.title = element_text(face = "bold", size = 11))
+p4 <- ggplot(heart_data, aes(x = EstadoFumador, fill = EnfermedadCardiaca)) +
+  geom_bar(position = "fill", alpha = 0.8) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "Estado Fumador", x = NULL, y = NULL) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 9),
+        plot.title = element_text(face = "bold", size = 11))
+(p1 + p2) / (p3 + p4) + plot_layout(guides = "collect") & 
+  theme(legend.position = "bottom")
+```
+
+En estos gráficos de barras podemos apreciar muy bien como la proporción
+de enfermos del corazón aumenta significativamente , por ejemplo, en
+grupos de edad avanzada, como cabría esperar o en gente que dice tener
+mala salud. En el caso de los fumadores sí que se nota que el riesgo de
+padecer cardiopatías desciende en los no fumadores, y además podemos ver
+como en los días de mala salud mental se mantiene casi constante excepto
+en el último tramo, pero este es un tramo que concentra muchos números
+de días.
+
+Por último podemos comparar variables binarrias con heat maps.
+
+```{r heatmap-binarias, echo=TRUE, warning=FALSE, message=FALSE, fig.width=7, fig.height=6}
+crear_heatmap_binaria <- function(data, var_binaria, titulo) {
+  data %>%count(EnfermedadCardiaca, !!sym(var_binaria)) %>%
+    mutate(Proporcion = n / sum(n)) %>%
+    ggplot(aes(x = EnfermedadCardiaca, y = as.factor(!!sym(var_binaria)), fill = Proporcion)) +geom_tile(color = "white") +
+    scale_fill_gradient(low = "#FFF5F0", high = "#2166AC", labels = scales::percent) +
+    geom_text(aes(label = scales::percent(Proporcion, accuracy = 0.1)), color = "black", size = 3.5) +
+    labs(title = titulo, x = "Enfermedad Cardíaca", y = NULL, fill = "Proporción Global") +theme_minimal() +theme(
+      plot.title = element_text(face = "bold", size = 10),
+      panel.grid = element_blank())}
+p1 <- crear_heatmap_binaria(heart_data, "TomografiaTorax", "Tomografía Tórax")
+p2 <- crear_heatmap_binaria(heart_data, "Ictus", "Ictus")
+p3 <- crear_heatmap_binaria(heart_data, "VacunaTetanos10Anos", "Vacuna Tétanos (<10 años)")
+p4 <- crear_heatmap_binaria(heart_data, "Diabetes", "Diagnóstico de Diabetes")
+(p1 + p2) / (p3 + p4) + plot_layout(guides = "collect")
+```
+
+Estos gráficos hay que interpretarlos con cuidado. Por ejemplo, el de la
+vacuna del tétanos nos dice que la proporción entre los que padecen
+enfermedades cardiovasculares en los grupos generados por la variable de
+vacuna del tétanos son prácticamente iguales. Por otra parte, en
+tomografía se ve claramente como a pesar de que hay menos personas con
+tomografías hechas tienen mayor proporción de cardiopatías. Lo mismo
+pasa con diabetes y con ictus pero al tener clases tan desbalanceadas
+cuesta mucho más visualizarlo.
 
 ## Análisis Multivariante
 
