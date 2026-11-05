@@ -1144,14 +1144,17 @@ cambio, las cifras más bajas (entre el 5% y el 6%) se registran en
 estados del oeste como Utah y Colorado, donde la población es más joven
 y practica más actividad física.
 
-# Discusión
+## Discusión y Conclusiones
 
-Authors should discuss the results and how they can be interpreted in
-perspective of previous studies and of the working hypotheses. The
-findings and their implications should be discussed in the broadest
-context possible. Future research directions may also be highlighted.
+Para responder a la pregunta de investigación planteada, el análisis
+confirma que existe una relación directa entre las características
+sociodemográficas, los hábitos de vida y las patologías previas con el
+riesgo cardiovascular. El envejecimiento y la acumulación de problemas
+de salud se consolidan como los factores más asociados. En cambio, las
+horas de sueño, la salud mental y el cigarrillo electrónico muestran un
+impacto directo bajo, mientras que el IMC actúa principalmente como un
+mediador indirecto. A nivel complementario, la representación en el mapa
+aporta un matiz visual exploratorio que permite observar una mayor
+concentración de casos en los estados del sureste de EE. UU.
 
-# Conclusión
-
-This section is not mandatory, but can be added to the manuscript if the
-discussion is unusually long or complex.
+### 
