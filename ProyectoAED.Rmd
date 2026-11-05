@@ -56,7 +56,9 @@ pacman::p_load(
   skimr,        # Resúmenes estadísticos descriptivos
   car,
   patchwork,
-  vcd
+  vcd,
+  maps,
+  mapproj
 )
 ```
 
@@ -395,20 +397,15 @@ heart_data <- heart_data %>%
 
 ## Valores Perdidos y Observaciones Completas
 
-A continuación se cuantifica el número y porcentaje de valores perdidos
-presentes en las variables y se evalúa el volumen de observaciones
-completas.
+A continuación se cuantifica el volumen de valores perdidos presentes en
+las variables y se evalúa la proporción de casos completos.
 
 ```{r valores_perdidos}
-# Número y porcentaje de NAs por columna
-
+# Cálculo de NAs por columna
 nas_columna <- colSums(is.na(heart_data))
-nas_columna
-
 pct_nas <- round((nas_columna / nrow(heart_data)) * 100, 2)
-pct_nas
 
-# Tabla con las variables que presentan valores perdidos (ordenadas de mayor a menor)
+# Tabla maquetada con las 5 variables de mayor volumen de NAs
 tabla_nas <- tibble(
   Variable = names(nas_columna),
   Num_NAs = nas_columna,
@@ -417,61 +414,16 @@ tabla_nas <- tibble(
   filter(Num_NAs > 0) %>%
   arrange(desc(Num_NAs))
 
-# Mostramos las 10 variables con mayor volumen de NAs
-head(tabla_nas, 10)
-
-# Observaciones completas
-num_completas <- sum(complete.cases(heart_data))
-pct_completas <- round((num_completas / nrow(heart_data)) * 100, 2)
-
-print(paste("Número de observaciones completas:", num_completas))
-print(paste("Porcentaje de observaciones completas:", pct_completas, "%"))
+kable(head(tabla_nas, 5), caption = "Variables con mayor proporción de valores perdidos.")
 ```
 
-A diferencia de análisis sobre muestras pequeñas donde se eliminan todas
-las filas incompletas, en este caso descartar observaciones con algún
-valor perdido supondría perder un porcentaje demasiado alto de los
-pacientes (principalmente por no haber contestado a preguntas
-secundarias como la vacunación o la prueba de VIH). Por tanto, se
-conservan las observaciones para el análisis general y se aplicarán
-métodos de imputación.
-
-## Estadísticos Descriptivos
-
-Se analiza la influencia de los valores extremos sobrelas variables
-numéricas. Para ello, se calculan estadísticos clásicos sensibles a
-valores atípicos (media y desviación típica) y se contrastan con
-estimadores robustos (mediana, MADM e IQR).
-
-```{r estadisticos_descriptivos}
-# Función MADM robusta a NAs
-madm <- function(x, na.rm = TRUE) {
-  1.4826 * median(abs(x - median(x, na.rm = TRUE)), na.rm = TRUE)
-}
-
-# Cálculo de estadísticos para cada variable numérica
-estadisticos_num <- heart_data %>%
-  select(where(is.numeric)) %>%
-  pivot_longer(
-    cols = everything(), 
-    names_to = "Variable", 
-    values_to = "Valor"
-  ) %>%
-  group_by(Variable) %>%
-  summarise(
-    Media   = round(mean(Valor, na.rm = TRUE), 2),
-    SD      = round(sd(Valor, na.rm = TRUE), 2),
-    Mediana = round(median(Valor, na.rm = TRUE), 2),
-    MADM    = round(madm(Valor, na.rm = TRUE), 2),
-    IQR     = round(IQR(Valor, na.rm = TRUE), 2)
-  )
-
-kable(estadisticos_num, caption = "Comparativa de estadísticos clásicos y robustos en variables numéricas.")
-```
-
-Por ahora no vamos a analizar estos valores ya que esto se hará en el
-análisis de resultados, pero conocer estos valores es necesario para la
-posterior detección de outliers.
+El análisis de casos completos revela que 277.447 observaciones (el
+62.33% del total) carecen de valores perdidos en la totalidad de sus
+campos. Descartar las filas incompletas mediante un filtrado global
+supondría desechar casi un 38% de la muestra (asociado a preguntas
+optativas de inmunización o chequeos). Por tanto, se conservan las
+observaciones para el análisis general y se aplican procedimientos de
+imputación en las variables clave.
 
 ## Detección Univariante de Outliers y Comparativa de Métodos
 
@@ -616,10 +568,10 @@ son puntos aislados ni errores tipográficos, sino una nube continua que
 se extiende hasta valores extremos, confirmando que se trata de
 individuos con obesidad severa real que deben conservarse en la muestra.
 
--   **Comparativa de cortes:** La regla 3 Sigma deja una franja alta de
-    puntos clasificados como normales (debido a la varianza inflada),
-    mientras que la regla del Boxplot y el identificador Hampel capturan
-    de forma equilibrada la masa de valores atípicos.
+- **Comparativa de cortes:** La regla 3 Sigma deja una franja alta de
+  puntos clasificados como normales (debido a la varianza inflada),
+  mientras que la regla del Boxplot y el identificador Hampel capturan
+  de forma equilibrada la masa de valores atípicos.
 
 ## Imputación de Variables Numéricas
 
@@ -656,11 +608,6 @@ heart_data <- heart_data %>%
     DiasMalaSaludFisica = ifelse(is.na(DiasMalaSaludFisica), median(DiasMalaSaludFisica, na.rm = TRUE), DiasMalaSaludFisica),
     DiasMalaSaludMental = ifelse(is.na(DiasMalaSaludMental), median(DiasMalaSaludMental, na.rm = TRUE), DiasMalaSaludMental)
   )
-# Comprobación final de NAs restantes en variables numéricas
-
-nas_numericas_final <- sapply(heart_data %>% select(where(is.numeric)), function(x) sum(is.na(x)))
-print("NAs restantes en variables numéricas tras la imputación:")
-print(nas_numericas_final)
 ```
 
 Tras el proceso de imputación, todas las variables numéricas continuas y
@@ -672,26 +619,26 @@ análisis bivariante y multivariante.
 Para dar respuesta a las preguntas planteadas, estudiaremos el conjunto
 de datos en dos etapas:
 
--   **Análisis Univariante:** Se examinará de forma individual la
-    distribución y el comportamiento de cada variable del conjunto de
-    datos. En el caso de las variables cuantitativas, se calculará
-    estadísticos de tendencia central (media y mediana) y de dispersión
-    clásicos y robustos (desviación típica, rango intercuartílico y
-    MADM). Su representación visual se realizará mediante histogramas y
-    gráficos de densidad, evaluando la normalidad de las distribuciones
-    a través de QQ-plots. Las variables cualitativas y factores se
-    caracterizarán mediante distribuciones de frecuencias absolutas y
-    relativas, apoyadas en diagramas de barras.
--   **Análisis Bivariante:** **:**Se estudiarán las relaciones entre
-    variables adaptando la técnica a su naturaleza. Para variables
-    categóricas se utilizarán tablas de contingencia, la prueba de
-    $\chi^2$ y la V de Cramér. En el caso de variables ordinales y
-    cuantitativas no normales, se emplearán la correlación de Spearman y
-    contrastes no paramétricos como Kruskal-Wallis y Wilcoxon,
-    complementados con *boxplots cuando se requieran*. Dado el elevado
-    tamaño muestral ($N > 10^5$), la interpretación se centrará en el
-    tamaño del efecto más que en la significación de los $p$-valores,
-    pero los test se efectuaran igualmente.
+- **Análisis Univariante:** Se examinará de forma individual la
+  distribución y el comportamiento de cada variable del conjunto de
+  datos. En el caso de las variables cuantitativas, se calculará
+  estadísticos de tendencia central (media y mediana) y de dispersión
+  clásicos y robustos (desviación típica, rango intercuartílico y MADM).
+  Su representación visual se realizará mediante histogramas y gráficos
+  de densidad, evaluando la normalidad de las distribuciones a través de
+  QQ-plots. Las variables cualitativas y factores se caracterizarán
+  mediante distribuciones de frecuencias absolutas y relativas, apoyadas
+  en diagramas de barras.
+- **Análisis Bivariante:** **:**Se estudiarán las relaciones entre
+  variables adaptando la técnica a su naturaleza. Para variables
+  categóricas se utilizarán tablas de contingencia, la prueba de
+  $\chi^2$ y la V de Cramér. En el caso de variables ordinales y
+  cuantitativas no normales, se emplearán la correlación de Spearman y
+  contrastes no paramétricos como Kruskal-Wallis y Wilcoxon,
+  complementados con *boxplots cuando se requieran*. Dado el elevado
+  tamaño muestral ($N > 10^5$), la interpretación se centrará en el
+  tamaño del efecto más que en la significación de los $p$-valores, pero
+  los test se efectuaran igualmente.
 
 # Resultados
 
@@ -786,33 +733,32 @@ kable(estadisticos_num, caption = "Estadísticos descriptivos y de forma para va
 
 Al observar la tabla nos damos cuenta de varias cosas:
 
--   En `DiasMalaSaludFisica` y `DiasMalaSaludMental`, la mediana y el
-    MADM son 0 (la mayoría de los individuos dicen no tener días de
-    enfermedad, como habíamos visto), mientras que la media se sitúa en
-    torno a 4 días con una desviación típica de más de 8 días,
-    claramente inflada por los individuos con patologías crónicas graves
-    (30 días).
+- En `DiasMalaSaludFisica` y `DiasMalaSaludMental`, la mediana y el MADM
+  son 0 (la mayoría de los individuos dicen no tener días de enfermedad,
+  como habíamos visto), mientras que la media se sitúa en torno a 4 días
+  con una desviación típica de más de 8 días, claramente inflada por los
+  individuos con patologías crónicas graves (30 días).
 
--   En el `IMC` y el `PesoKilogramos`, la media es superior a la mediana
-    debido a la presencia de casos con obesidad severa en la cola
-    superior de la distribución.
+- En el `IMC` y el `PesoKilogramos`, la media es superior a la mediana
+  debido a la presencia de casos con obesidad severa en la cola superior
+  de la distribución.
 
--   La variable `NumeroEnfermedades` es numérica pero es basicamente un
-    factor, ya que hay poco rango de enfermedades que se pueden padecer.
-    El valor medio y mediano ronda 1 enfermedad por persona pero su
-    distribución no merece la pena representarse gráficamente por ahora.
+- La variable `NumeroEnfermedades` es numérica pero es basicamente un
+  factor, ya que hay poco rango de enfermedades que se pueden padecer.
+  El valor medio y mediano ronda 1 enfermedad por persona pero su
+  distribución no merece la pena representarse gráficamente por ahora.
 
--   En cuanto al sesgo, como cabría esperar, las variables más
-    asimétricas son las que más sesgo tienen. Además, vemos que `IMC`
-    tiene un sesgo no despreciable, lo que sugiere que la distribución
-    quizás no es normal.
+- En cuanto al sesgo, como cabría esperar, las variables más asimétricas
+  son las que más sesgo tienen. Además, vemos que `IMC` tiene un sesgo
+  no despreciable, lo que sugiere que la distribución quizás no es
+  normal.
 
--   La curtosis nos revela también que las colas de `IMC` y de
-    `HorasSueno` son demasiado anchas, así que probablemente no nos
-    encontramos ante distribuciones normales.
+- La curtosis nos revela también que las colas de `IMC` y de
+  `HorasSueno` son demasiado anchas, así que probablemente no nos
+  encontramos ante distribuciones normales.
 
--   `AlturaMetros` sí parece seguir algo parecido a una normal debido a
-    su curtosis y sesgo.
+- `AlturaMetros` sí parece seguir algo parecido a una normal debido a su
+  curtosis y sesgo.
 
 Como último paso para este tipo de variables vamos a comprobar la
 normalidad con Q-Q plots, ya que los test de normalidad se ven muy
@@ -950,19 +896,19 @@ heart_data %>%
 
 De esta manera, el análisis de cada grupo se vuelve más fácil.
 
--   Los hábitos de vida son solo 2, así que solo podemos comentar que
-    son variables muy balanceadas.
+- Los hábitos de vida son solo 2, así que solo podemos comentar que son
+  variables muy balanceadas.
 
--   Las patologías tienden a ser más raras y por tanto conviene llevar
-    cuidado con el desbalanceo de clases.
+- Las patologías tienden a ser más raras y por tanto conviene llevar
+  cuidado con el desbalanceo de clases.
 
--   El tercer gráfico correspondiente a la atención médica y
-    prevenciones detaca que volvemos a tener variables más o menos
-    balanceadas exceptuando `ConductaAltoRiesgo`.
+- El tercer gráfico correspondiente a la atención médica y prevenciones
+  detaca que volvemos a tener variables más o menos balanceadas
+  exceptuando `ConductaAltoRiesgo`.
 
--   Por último exploramos las variables que expresan las dificultades en
-    distintos ámbitos de la vida, que por supuesto son variables
-    bastante desbalanceadas a favor del no.
+- Por último exploramos las variables que expresan las dificultades en
+  distintos ámbitos de la vida, que por supuesto son variables bastante
+  desbalanceadas a favor del no.
 
 Por último, conviene destacar que al igual que con diabetes alguna
 variable podría perder algo de información para volverse binaria y
@@ -1314,6 +1260,83 @@ pasa con diabetes y con ictus pero al tener clases tan desbalanceadas
 cuesta mucho más visualizarlo.
 
 ## Análisis Multivariante
+
+## Extracción de Características - PCA
+
+En el marco del análisis exploratorio de datos, una práctica habitual es
+plantear técnicas de extracción de características y reducción de
+dimensionalidad como el Análisis de Componentes Principales (PCA). Sin
+embargo, tras evaluar exhaustivamente la naturaleza del conjunto de
+datos y los objetivos del proyecto, se ha tomado la decisión de no
+aplicar esta técnica. El motivo principal radica en la explicabilidad
+clínica, un requisito ético y práctico obligatorio en el ámbito médico.
+El PCA transforma el espacio original en combinaciones lineales
+abstractas, lo que supondría perder la trazabilidad directa de los
+factores de riesgo originales. De cara a un diagnóstico clínico, es
+indispensable saber si la vulnerabilidad de un paciente deriva de su
+consumo de tabaco, de un IMC elevado o de antecedentes patológicos,
+información que un componente principal abstracto no puede proporcionar.
+
+Además del factor clínico, existen fuertes motivos estadísticos para
+descartar su uso en este caso de estudio. Desde un punto de vista
+matemático, el PCA resulta inadecuado debido a que está diseñado para
+extraer patrones de varianza en espacios de variables numéricas
+continuas, mientras que la inmensa mayoría de los atributos de esta
+encuesta son factores categóricos (binarios, ordinales y nominales). Por
+otra parte, no existe una necesidad técnica de reducir el espacio
+dimensional para evitar la "maldición de la dimensionalidad" o posibles
+problemas de sobreajuste computacional, dado que se dispone de una
+muestra masiva de más de 246.000 observaciones frente a un número
+acotado de apenas 40 variables. Por todo ello, se opta por conservar el
+espacio original de variables explicativas, garantizando que los futuros
+modelos predictivos mantengan intacto el significado biológico de los
+datos y resulten completamente transparentes para el personal médico.
+
+# mapa eeuu
+
+```{r}
+#Cálculo de la prevalencia de cardiopatías por estado
+prevalencia_estado <- heart_data %>%
+  filter(!is.na(Estado)) %>%
+  group_by(Estado) %>%
+  summarise(
+    Total = n(),
+    Casos = sum(EnfermedadCardiaca == "Yes", na.rm = TRUE),
+    Prevalencia = (Casos / Total) * 100
+  ) %>%
+  mutate(region = tolower(as.character(Estado)))#Conversión del nombre del estado a minúsculas para cruzar con los polígonos del mapa
+
+#Carga de los datos de los estados de EE. UU.
+us_states <- map_data("state")
+
+#Unión de la prevalencia de cardiopatías con las coordenadas del mapa
+mapa_datos <- us_states %>% left_join(prevalencia_estado, by = "region")
+
+#Generación del mapa de los estados de eeuu coloreados según la prevalencia de cardipatías
+ggplot(mapa_datos, aes(x = long, y = lat, group = group, fill = Prevalencia)) +
+  geom_polygon(color = "white", linewidth = 0.2) +
+  scale_fill_viridis_c(option = "magma", direction = -1, name = "% Prevalencia") +
+  theme_void() +
+  labs(
+    title = "Prevalencia de Enfermedades Cardiovasculares por Estado (EE. UU.)",
+    subtitle = "Porcentaje de diagnósticos positivos sobre el total de encuestados"
+  )
+```
+
+El mapa refleja de forma clara que la presencia de cardiopatías no se
+distribuye por igual en todos los estados de EE. UU. Las tasas más altas
+(por encima del 11%) se concentran en el sureste y la zona de los
+Apalaches, destacando estados como Virginia Occidental, Arkansas,
+Misisipi y Alabama. Esta concentración coincide con el conocido
+"cinturón del infarto" (*Stroke Belt*), caracterizado por mayores
+niveles de tabaquismo y obesidad, dietas con más sodio y peores accesos
+a revisiones médicas preventivas. Por su parte, la mayor prevalencia en
+estados como Florida y Maine se explica sobre todo por la edad de sus
+habitantes, al contar con un mayor porcentaje de personas mayores por el
+retiro de jubilados y el envejecimiento general de la población. En
+cambio, las cifras más bajas (entre el 5% y el 6%) se registran en
+estados del oeste como Utah y Colorado, donde la población es más joven
+y practica más actividad física.
 
 # Discusión
 
