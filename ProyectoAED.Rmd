@@ -55,7 +55,8 @@ pacman::p_load(
   tidyverse,    # Manipulación (dplyr, tidyr, readr) y gráficos (ggplot2)
   skimr,        # Resúmenes estadísticos descriptivos
   car,
-  patchwork
+  patchwork,
+  vcd
 )
 ```
 
@@ -681,14 +682,16 @@ de datos en dos etapas:
     a través de QQ-plots. Las variables cualitativas y factores se
     caracterizarán mediante distribuciones de frecuencias absolutas y
     relativas, apoyadas en diagramas de barras.
--   **Análisis Bivariante:** Se estudiarán las asociaciones e
-    dependencias entre pares de variables para identificar patrones .
-    Para las variables cuantitativas se emplearán coeficientes de
-    correlación, tanto Pearson como Spearman]. En el caso de las
-    variables cualitativas, se utilizan tablas de contingencia y el test
-    de independencia de $\chi^2$ . Asimismo, para evaluar la relación
-    entre variables cuantitativas y cualitativas se recurrirá a
-    diagramas de caja (*boxplots*) y gráficos de distribución comparada.
+-   **Análisis Bivariante:** **:**Se estudiarán las relaciones entre
+    variables adaptando la técnica a su naturaleza. Para variables
+    categóricas se utilizarán tablas de contingencia, la prueba de
+    $\chi^2$ y la V de Cramér. En el caso de variables ordinales y
+    cuantitativas no normales, se emplearán la correlación de Spearman y
+    contrastes no paramétricos como Kruskal-Wallis y Wilcoxon,
+    complementados con *boxplots cuando se requieran*. Dado el elevado
+    tamaño muestral ($N > 10^5$), la interpretación se centrará en el
+    tamaño del efecto más que en la significación de los $p$-valores,
+    pero los test se efectuaran igualmente.
 
 # Resultados
 
@@ -1073,6 +1076,106 @@ solo los 15 estados más representados, pero se entiende que no hay mucha
 variabilidad entre estados.
 
 ## Análisis Bivariante
+
+Tras ver una a una las variables y sus distribuciones, ahora podemos
+comenzar a ver las relaciones dos a dos entre variables para poder
+establecer conexiones. Dividiremos este apartado en dos, el primero
+intentando ver las relaciones que hay entre nuestras variables
+explicativas, para poder encontrar variables redundantes susceptibles a
+eliminación para futuros modelos, y el segundo, estableciendo relaciones
+entre la variable objetivo y las demás variables para poder ver que
+variables afectan más a la aparición de enfermedades cardiovasculares.
+
+## Redundancia y Multicolinealidad entre Variables Explicativas
+
+La cantidaad de pares entre las variables explicativas es muy grande,
+así que vamos a hacer selecciones lógicas de variables que a priori son
+susceptibles a estar correlacionadas y comprobarlo con las herramientas
+estadísticas adecuadas.
+
+El primer grupo de variables que vamos a estudiar es del subgrupo de
+variables que representan dificultades, podemos pensar que las mismas
+dificultades motoras pueden llegar a traducirse a dificultad al andar, a
+vestirse o bañarse, y a hacer tareas en general. Por tanto, vamos a
+calcular el coeficiente V de Cramer para tener una medida de que tan
+redundantes son las variables.
+
+```{r}
+assocstats(table(heart_data$DificultadCaminar, heart_data$DificultadVestirseBanarse, useNA = "no"))
+cat('________________________________\n')
+assocstats(table(heart_data$DificultadCaminar, heart_data$DificultadTareasDiarias, useNA = "no"))
+cat('________________________________\n')
+assocstats(table(heart_data$DificultadVestirseBanarse, heart_data$DificultadTareasDiarias, useNA = "no"))
+```
+
+Los valores del estadístico no son despreciables, pero tampoco son
+altos, puesto que no superan siquiera el 0.5. Por tanto, dos a dos,
+podemos decir que las variables tengan una correlación suficiente como
+para eliminar alguna.
+
+El siguiente grupo de variables a estudiar es uno formado por la salud
+general autopercibida y las variables de dias de malestar, tanto físico
+como mental. Para este caso, altener una variable categórica y otra
+numérica una opción sería hacer un ANOVA, pero en este caso es más
+práctico aprovechar que el factor está ordenado y utilizar el test de
+Kruskal-Wallis. Para complementar esta información también utilizaremos
+el test de Spearman.
+
+```{r}
+kruskal.test(DiasMalaSaludFisica ~ SaludGeneral, data = heart_data)
+cor.test(as.numeric(heart_data$SaludGeneral), heart_data$DiasMalaSaludFisica, method = "spearman")
+
+kruskal.test(DiasMalaSaludMental ~ SaludGeneral, data = heart_data)
+cor.test(as.numeric(heart_data$SaludGeneral), heart_data$DiasMalaSaludMental, method = "spearman")
+```
+
+El test de Kruskal con p valor bajo nos dice que hay cierta relación
+entre las variables, pero es Spearman el que cuantifica como de fuerte
+es esta relación. Valores negativos entre -0.2 y -0.5 nos permiten
+concluir que la relación es moderada, pero no hay redundancia, además de
+que la relación de estas variables es inversa (mayor salud general se
+traduce en menos dias malos). Además, podemos concluir que la salud
+física es más influyente en la percepción de la salud general.
+
+Relacionado con esto tambien podemos comparar las variables
+`DiasMalaSaludMental` con `TrastornoDepresivo`. Esto lo haremos de
+manera similar a la anterior, utilizando el test de Wilcoxon para
+comparar una variable numérica con una binaria, y apoyándonos en
+Spearman para identificar la intensidad de la relación.
+
+```{r}
+wilcox.test(DiasMalaSaludMental ~ TrastornoDepresivo, data = heart_data)
+
+cor.test(as.numeric(heart_data$TrastornoDepresivo), heart_data$DiasMalaSaludMental, method = "spearman")
+```
+
+De nuevo, la relación parece ser existente, pero Spearman nos dice que
+la magnitud no es lo suficientemente grande como para ser redundante.
+Destacar que como cabría esperar una relación directa entre las dos
+variables, en contraposición a la de salud general que era inversa.
+
+El último bloque que vamos a tratar es el de fumadores y fumadores
+electrónicos o vaper. Claramente son variables que pueden estar muy
+relacionadas así que vamos a utilizar la V de Cramer para comparar ambas
+variables.
+
+```{r}
+assocstats(table(heart_data$EstadoFumador, heart_data$UsoCigarrilloElectronico, useNA = "no"))
+```
+
+El valor del estadístico es bastante bajo, lo cual nos dice que a priori
+la relación entre estas dos variables no es nada importante.
+
+Por último, destacar que otras variables que van a tener cierta
+correlación por construcción son las que literalmente hemos construido a
+partir de otras variables, como `IMC` o `TotalEnfermedades`. Estas
+variables no las hemos estudiado aquí porque su cometido es el
+contrario, intentar resumir el contenido de varias variables para
+enriquecer el dataset. Dependiendo del modelo con el que se quiera
+trabajar resulta más útil quitar variables redundantes o generar nuevas
+variables que pueden resumir mejor la información.
+
+## Relación con la variable objetivo
 
 # Discusión
 
