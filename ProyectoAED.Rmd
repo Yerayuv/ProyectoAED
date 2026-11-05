@@ -1176,7 +1176,21 @@ variables que pueden resumir mejor la información.
 
 ### Relación con la variable objetivo
 
-## Análisis Multivariante
+## Extracción de Características - PCA
+
+En el marco del análisis exploratorio de datos, una práctica habitual es
+plantear técnicas de extracción de características y reducción de
+dimensionalidad como el Análisis de Componentes Principales (PCA). Sin
+embargo, tras evaluar exhaustivamente la naturaleza del conjunto de
+datos y los objetivos del proyecto, se ha tomado la decisión de no
+aplicar esta técnica. El motivo principal radica en la explicabilidad
+clínica, un requisito ético y práctico obligatorio en el ámbito médico.
+El PCA transforma el espacio original en combinaciones lineales
+abstractas, lo que supondría perder la trazabilidad directa de los
+factores de riesgo originales. De cara a un diagnóstico clínico, es
+indispensable saber si la vulnerabilidad de un paciente deriva de su
+consumo de tabaco, de un IMC elevado o de antecedentes patológicos,
+información que un componente principal abstracto no puede proporcionar.
 
 # Discusión
 
