@@ -1165,3 +1165,12 @@ mala, antecedentes de patologías previas (diabetes, EPOC, ictus o
 artritis), historial de tabaquismo y el haber acudido habitualmente a
 chequeos médicos o pruebas de seguimiento en el tórax tras haber
 experimentado molestias o problemas de salud.
+
+### Líneas de Investigación Futura
+
+Con el conjunto de datos acondicionado, se podría plantear en un futuro
+una fase de modelización predictiva mediante algoritmos supervisados
+como Random Forest. Esta hipotética extensión del trabajo se centraría
+en aplicar técnicas de rebalanceo para abordar el 9% de casos positivos,
+buscando maximizar la sensibilidad diagnóstica en la detección precoz de
+cardiopatías.
