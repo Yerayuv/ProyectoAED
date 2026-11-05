@@ -1185,6 +1185,21 @@ ggplot(mapa_datos, aes(x = long, y = lat, group = group, fill = Prevalencia)) +
   )
 ```
 
+El mapa refleja de forma clara que la presencia de cardiopatías no se
+distribuye por igual en todos los estados de EE. UU. Las tasas más altas
+(por encima del 11%) se concentran en el sureste y la zona de los
+Apalaches, destacando estados como Virginia Occidental, Arkansas,
+Misisipi y Alabama. Esta concentración coincide con el conocido
+"cinturón del infarto" (*Stroke Belt*), caracterizado por mayores
+niveles de tabaquismo y obesidad, dietas con más sodio y peores accesos
+a revisiones médicas preventivas. Por su parte, la mayor prevalencia en
+estados como Florida y Maine se explica sobre todo por la edad de sus
+habitantes, al contar con un mayor porcentaje de personas mayores por el
+retiro de jubilados y el envejecimiento general de la población. En
+cambio, las cifras más bajas (entre el 5% y el 6%) se registran en
+estados del oeste como Utah y Colorado, donde la población es más joven
+y practica más actividad física.
+
 # Discusión
 
 Authors should discuss the results and how they can be interpreted in
