@@ -56,7 +56,9 @@ pacman::p_load(
   skimr,        # Resúmenes estadísticos descriptivos
   car,
   patchwork,
-  vcd
+  vcd,
+  maps,
+  mapproj
 )
 ```
 
@@ -1151,6 +1153,37 @@ acotado de apenas 40 variables. Por todo ello, se opta por conservar el
 espacio original de variables explicativas, garantizando que los futuros
 modelos predictivos mantengan intacto el significado biológico de los
 datos y resulten completamente transparentes para el personal médico.
+
+# mapa eeuu
+
+```{r}
+
+prevalencia_estado <- heart_data %>%
+  filter(!is.na(Estado)) %>%
+  group_by(Estado) %>%
+  summarise(
+    Total = n(),
+    Casos = sum(EnfermedadCardiaca == "Yes", na.rm = TRUE),
+    Prevalencia = (Casos / Total) * 100
+  ) %>%
+  mutate(region = tolower(as.character(Estado)))
+
+
+us_states <- map_data("state")
+
+
+mapa_datos <- us_states %>%
+  left_join(prevalencia_estado, by = "region")
+
+ggplot(mapa_datos, aes(x = long, y = lat, group = group, fill = Prevalencia)) +
+  geom_polygon(color = "white", linewidth = 0.2) +
+  scale_fill_viridis_c(option = "magma", direction = -1, name = "% Prevalencia") +
+  theme_void() +
+  labs(
+    title = "Prevalencia de Enfermedades Cardiovasculares por Estado (EE. UU.)",
+    subtitle = "Porcentaje de diagnósticos positivos sobre el total de encuestados"
+  )
+```
 
 # Discusión
 
