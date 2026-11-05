@@ -1086,7 +1086,7 @@ eliminación para futuros modelos, y el segundo, estableciendo relaciones
 entre la variable objetivo y las demás variables para poder ver que
 variables afectan más a la aparición de enfermedades cardiovasculares.
 
-## Redundancia y Multicolinealidad entre Variables Explicativas
+### Redundancia y Multicolinealidad entre Variables Explicativas
 
 La cantidaad de pares entre las variables explicativas es muy grande,
 así que vamos a hacer selecciones lógicas de variables que a priori son
@@ -1175,7 +1175,9 @@ enriquecer el dataset. Dependiendo del modelo con el que se quiera
 trabajar resulta más útil quitar variables redundantes o generar nuevas
 variables que pueden resumir mejor la información.
 
-## Relación con la variable objetivo
+### Relación con la variable objetivo
+
+## Análisis Multivariante
 
 # Discusión
 
