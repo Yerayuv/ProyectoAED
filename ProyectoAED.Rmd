@@ -1157,7 +1157,7 @@ datos y resulten completamente transparentes para el personal médico.
 # mapa eeuu
 
 ```{r}
-
+#Cálculo de la prevalencia de cardiopatías por estado
 prevalencia_estado <- heart_data %>%
   filter(!is.na(Estado)) %>%
   group_by(Estado) %>%
@@ -1166,15 +1166,15 @@ prevalencia_estado <- heart_data %>%
     Casos = sum(EnfermedadCardiaca == "Yes", na.rm = TRUE),
     Prevalencia = (Casos / Total) * 100
   ) %>%
-  mutate(region = tolower(as.character(Estado)))
+  mutate(region = tolower(as.character(Estado)))#Conversión del nombre del estado a minúsculas para cruzar con los polígonos del mapa
 
-
+#Carga de los datos de los estados de EE. UU.
 us_states <- map_data("state")
 
+#Unión de la prevalencia de cardiopatías con las coordenadas del mapa
+mapa_datos <- us_states %>% left_join(prevalencia_estado, by = "region")
 
-mapa_datos <- us_states %>%
-  left_join(prevalencia_estado, by = "region")
-
+#Generación del mapa de los estados de eeuu coloreados según la prevalencia de cardipatías
 ggplot(mapa_datos, aes(x = long, y = lat, group = group, fill = Prevalencia)) +
   geom_polygon(color = "white", linewidth = 0.2) +
   scale_fill_viridis_c(option = "magma", direction = -1, name = "% Prevalencia") +
