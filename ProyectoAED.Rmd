@@ -1157,4 +1157,11 @@ mediador indirecto. A nivel complementario, la representación en el mapa
 aporta un matiz visual exploratorio que permite observar una mayor
 concentración de casos en los estados del sureste de EE. UU.
 
-### 
+### Perfil de Vulnerabilidad del Paciente
+
+El arquetipo de mayor riesgo corresponde a un varón de 65 o más años.
+Clínicamente, se caracteriza por una percepción de salud de regular a
+mala, antecedentes de patologías previas (diabetes, EPOC, ictus o
+artritis), historial de tabaquismo y el haber acudido habitualmente a
+chequeos médicos o pruebas de seguimiento en el tórax tras haber
+experimentado molestias o problemas de salud.
