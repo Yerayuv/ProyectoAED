@@ -46,7 +46,8 @@ knitr::opts_chunk$set(
   fig.align = "center", 
   fig.width = 7,      
   fig.height = 3.0,
-  dpi = 150
+  dpi = 150,
+  out.width = "85%"
 )
 
 # Carga de paquetes
@@ -61,7 +62,8 @@ pacman::p_load(
   patchwork,
   vcd,
   maps,
-  mapproj
+  mapproj,
+  kableExtra
 )
 ```
 
@@ -70,7 +72,7 @@ pacman::p_load(
 Las enfermedades cardiovasculares representan una de las principales
 causas de mortalidad a nivel global. Según la Organización Mundial de la
 Salud (OMS), estas patologías son responsables de aproximadamente un 32%
-de todas las muertes en el mundo [@who_cardiovascular]. Por tanto,
+de todas las muertes en el mundo. Por tanto,
 lograr identificar de forma precoz a los pacientes susceptibles de
 padecerlas puede salvar multitud de vidas, especialmente considerando
 que el diagnóstico de estas enfermedades suele producirse en fases
@@ -78,8 +80,7 @@ avanzadas.
 
 El objetivo principal de este estudio es analizar los datos procedentes
 de la encuesta epidemiológica anual del *Centers for Disease Control and
-Prevention* (CDC), procesados y disponibles en Kaggle
-[@pytlak_heart_disease], para establecer relaciones entre diversas
+Prevention* (CDC), procesados y disponibles en Kaggle, para establecer relaciones entre diversas
 variables explicativas y la aparición de cardiopatías. El conjunto de
 datos está compuesto por 40 variables, incluyendo datos demográficos,
 hábitos de vida y la presencia de otras patologías secundarias, junto
@@ -430,10 +431,9 @@ de datos en dos etapas:
   QQ-plots. Las variables cualitativas y factores se caracterizarán
   mediante distribuciones de frecuencias absolutas y relativas, apoyadas
   en diagramas de barras.
-- **Análisis Bivariante:** **:**Se estudiarán las relaciones entre
+- **Análisis Bivariante:** Se estudiarán las relaciones entre
   variables adaptando la técnica a su naturaleza. Para variables
-  categóricas se utilizarán tablas de contingencia, la prueba de
-  $\chi^2$ y la V de Cramér. En el caso de variables ordinales y
+  categóricas se utilizará la V de Cramér y gráficos de barras, además de mapas de calor cuando sean binarias las variables. En el caso de variables ordinales y
   cuantitativas no normales, se emplearán la correlación de Spearman y
   contrastes no paramétricos como Kruskal-Wallis y Wilcoxon,
   complementados con *boxplots cuando se requieran*. Dado el elevado
@@ -465,16 +465,12 @@ Primero vamos a comenzar con unos plots de las distribuciones de cada
 variable, obviando `AlturaMetros` y `PesoKilogramos` porque son algo
 redundantes con `IMC`.
 
-```{r fig-distribuciones, fig.cap="Distribución de las variables cuantitativas principales.\\label{fig:distribuciones}", fig.width=8, fig.height=6, out.width="100%", warning=FALSE, message=FALSE}
-library(tidyverse)
-
+```{r fig-distribuciones, fig.cap="Distribución de las variables cuantitativas principales.\\label{fig:distribuciones}", fig.width=6, fig.height=4, warning=FALSE, message=FALSE}
 heart_data %>%
   select(IMC, HorasSueno, DiasMalaSaludFisica, DiasMalaSaludMental) %>%
-  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor") %>%
-  ggplot(aes(x = Valor)) +
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor") %>%ggplot(aes(x = Valor)) +
   geom_histogram(bins = 30, fill = "steelblue", color = "white") +
-  facet_wrap(~ Variable, scales = "free") +
-  theme_minimal() +
+  facet_wrap(~ Variable, scales = "free") +theme_minimal() +
   labs(x = NULL, y = "Frecuencia")
 ```
 
@@ -499,37 +495,25 @@ skewness <- function(x) {
   n <- length(x)
   m <- mean(x)
   s <- sd(x)
-  sum((x - m)^3 / s^3) / n
-}
-
+  sum((x - m)^3 / s^3) / n}
 kurtosis <- function(x) {
   x <- x[!is.na(x)]
   n <- length(x)
   m <- mean(x)
   s <- sd(x)
-  sum((x - m)^4 / s^4) / n - 3
-}
-
+  sum((x - m)^4 / s^4) / n - 3}
 madm <- function(x) {
-  1.4826 * median(abs(x - median(x, na.rm = TRUE)), na.rm = TRUE)
-}
-
-# Hago de nuevo la tabla por todas las imputaciones y demas cambios que hemos hecho
-estadisticos_num <- heart_data %>%
-  select(where(is.numeric)) %>%
+  1.4826 * median(abs(x - median(x, na.rm = TRUE)), na.rm = TRUE)}
+# Hago de nuevo la tabla por todas las imputaciones hechas
+estadisticos_num <- heart_data %>%select(where(is.numeric)) %>%
   pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor") %>%
-  group_by(Variable) %>%
-  summarise(
-    Media    = round(mean(Valor, na.rm = TRUE), 2),
-    SD       = round(sd(Valor, na.rm = TRUE), 2),
-    Mediana  = round(median(Valor, na.rm = TRUE), 2),
-    MADM     = round(madm(Valor), 2),
-    IQR      = round(IQR(Valor, na.rm = TRUE), 2),
-    Sesgo    = round(skewness(Valor), 2),
-    Curtosis = round(kurtosis(Valor), 2)
-  )
-
-kable(estadisticos_num, caption = "Estadísticos descriptivos y de forma para variables cuantitativas.")
+  group_by(Variable) %>%summarise(
+    Media = round(mean(Valor, na.rm = TRUE), 2),SD  = round(sd(Valor, na.rm = TRUE), 2),
+    Mediana = round(median(Valor, na.rm = TRUE), 2),
+    MADM = round(madm(Valor), 2),IQR = round(IQR(Valor, na.rm = TRUE), 2),
+    Sesgo = round(skewness(Valor), 2),Curtosis = round(kurtosis(Valor), 2))
+kable(estadisticos_num, caption = "Estadísticos para variables cuantitativas.", booktabs = TRUE) %>%
+  kable_styling(font_size = 6, latex_options = "hold_position")
 ```
 
 Al observar la tabla nos damos cuenta de varias cosas:
@@ -565,27 +549,14 @@ Como último paso para este tipo de variables vamos a comprobar la
 normalidad con Q-Q plots, ya que los test de normalidad se ven muy
 penalizados por la cantidad tan grande de instancias que tenemos.
 
-```{r fig-qqplot-comparativa, fig.cap="Comparativa de gráficos QQ de normalidad para Altura, IMC y Horas de Sueño.\\label{fig:qqplot}", fig.width=10, fig.height=4, out.width="100%", warning=FALSE, message=FALSE}
+```{r fig-qqplot-comparativa, fig.cap="Comparativa de gráficos QQ de normalidad para Altura, IMC y Horas de Sueño.\\label{fig:qqplot}", fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 par(mfrow = c(1, 3))
-
-qqPlot(heart_data$AlturaMetros, 
-       main = "A) Altura (Metros)", 
-       xlab = "Cuantiles teóricos", 
-       ylab = "Cuantiles muestrales",
-       id = FALSE)
-
-qqPlot(heart_data$IMC, 
-       main = "B) Índice de Masa Corporal", 
-       xlab = "Cuantiles teóricos", 
-       ylab = "Cuantiles muestrales",
-       id = FALSE)
-
-qqPlot(heart_data$HorasSueno, 
-       main = "C) Horas de Sueño", 
-       xlab = "Cuantiles teóricos", 
-       ylab = "Cuantiles muestrales",
-       id = FALSE)
-
+qqPlot(heart_data$AlturaMetros, main = "A) Altura (Metros)", 
+       xlab = "Cuantiles teóricos", ylab = "Cuantiles muestrales",id = FALSE)
+qqPlot(heart_data$IMC, main = "B) Índice de Masa Corporal", 
+       xlab = "Cuantiles teóricos", ylab = "Cuantiles muestrales",id = FALSE)
+qqPlot(heart_data$HorasSueno, main = "C) Horas de Sueño", 
+       xlab = "Cuantiles teóricos", ylab = "Cuantiles muestrales",id = FALSE)
 par(mfrow = c(1, 1))
 ```
 
@@ -603,24 +574,17 @@ hacer es el cálculo de la proporción de 'Sí' en cada una de las
 variables.
 
 ```{r tabla-binarias, message=FALSE, warning=FALSE}
-
 variables_binarias <- heart_data %>%
-  select(where(~ is.factor(.x) && nlevels(.x) == 2)) %>%
-  names()
-
-tabla_binarias <- heart_data %>%
-  select(any_of(variables_binarias)) %>%
-  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Respuesta") %>%
-  filter(!is.na(Respuesta)) %>%
-  count(Variable, Respuesta, name = "Conteo") %>%
-  group_by(Variable) %>%
+  select(where(~ is.factor(.x) && nlevels(.x) == 2)) %>%names()
+tabla_binarias <- heart_data %>%select(any_of(variables_binarias)) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Respuesta") %>%filter(!is.na(Respuesta)) %>%count(Variable, Respuesta, name = "Conteo") %>%group_by(Variable) %>%
   mutate(Porcentaje = round((Conteo / sum(Conteo)) * 100, 2)) %>%
-  ungroup() %>%
-  filter(Respuesta == "Yes") %>%
-  arrange(desc(Porcentaje)) %>%
+  ungroup() %>%filter(Respuesta == "Yes") %>%arrange(desc(Porcentaje)) %>%
   select(Variable, N = Conteo, Porcentaje = Porcentaje)
-
-kable(tabla_binarias, caption = "Frecuencia de factores de riesgo y patologías binarias.")
+filas_a_mostrar <- unique(c(1,3,9,11,15,26))
+tabla_binarias_reducida <- tabla_binarias %>% slice(filas_a_mostrar)
+kable(tabla_binarias_reducida, caption = "Frecuencia de factores de riesgo yde algunas binarias.", booktabs = TRUE) %>%
+  kable_styling(font_size = 6, latex_options = "hold_position")
 ```
 
 Viendo esta tabla podemos destacar la presencia de distintos tipos de
@@ -631,68 +595,36 @@ tener una mejor idea de lo que estamos viendo en el resto de variables
 podemos fragmentar las variables en distintos grupos, siendo estos
 grupos hábitos, otras patologías y distintas medidas de prevención.
 
-```{r fig-binarias-tematica, fig.cap="Prevalencia de factores binarios agrupados por dominios clínicos de la introducción.\\label{fig:binarias_bloques}", fig.width=9, fig.height=6, out.width="100%", warning=FALSE, message=FALSE}
-#es necesario dividir en grupos primero
-
+```{r fig-binarias-tematica, fig.cap="Distribución de variables binarios\\label{fig:binarias_bloques}", fig.width=9, fig.height=6, warning=FALSE, message=FALSE}
 habitos_binarios <- c("ActividadFisica", "ConsumidorAlcohol")
-patologias_binarias <- c("Ictus", "Diabetes", 
-                         "Asma", "EPOC", "EnfermedadRenal", "Artritis", 
-                         "CancerPiel", "TrastornoDepresivo")
-prevencion_binarias <- c("TomografiaTorax", "PruebaVIH", "VacunaGripeUltimoAno", 
-                         "VacunaNeumococo", "VacunaTetanos10Anos", "ConductaAltoRiesgo", "CovidPositivo")
-limitaciones_binarias <- c("DificultadAuditiva", "DificultadVisual", "DificultadConcentracion", 
-                           "DificultadCaminar", "DificultadVestirseBanarse", "DificultadTareasDiarias")
-
+patologias_binarias <- c("Ictus", "Diabetes", "Asma", "EPOC", "EnfermedadRenal", "Artritis", "CancerPiel", "TrastornoDepresivo")
+prevencion_binarias <- c("TomografiaTorax", "PruebaVIH", "VacunaGripeUltimoAno", "VacunaNeumococo", "VacunaTetanos10Anos", "ConductaAltoRiesgo", "CovidPositivo")
+limitaciones_binarias <- c("DificultadAuditiva", "DificultadVisual", "DificultadConcentracion", "DificultadCaminar", "DificultadVestirseBanarse", "DificultadTareasDiarias")
 todas_binarias <- c(habitos_binarios, patologias_binarias, prevencion_binarias,limitaciones_binarias)
-
-
-tabla_binarias_tematica <- heart_data %>%
-  select(any_of(todas_binarias)) %>%
-  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Respuesta") %>%
-  filter(!is.na(Respuesta)) %>%
-  count(Variable, Respuesta, name = "Conteo") %>%
-  group_by(Variable) %>%
+tabla_binarias_tematica <- heart_data %>%select(any_of(todas_binarias)) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Respuesta") %>%filter(!is.na(Respuesta)) %>%count(Variable, Respuesta, name = "Conteo") %>%group_by(Variable) %>%
   mutate(Porcentaje = round((Conteo / sum(Conteo)) * 100, 2)) %>%
-  ungroup() %>%
-  filter(Respuesta == "Yes") %>%
-  mutate(
+  ungroup() %>%filter(Respuesta == "Yes") %>%mutate(
     BloqueTematico = case_when(
       Variable %in% habitos_binarios     ~ "1. Hábitos de Vida",
       Variable %in% patologias_binarias  ~ "2. Patologías y Antecedentes",
       Variable %in% prevencion_binarias  ~ "3. Prevención y Atención Médica",
       Variable %in% limitaciones_binarias  ~ "4. Limitaciones",
-      TRUE                               ~ "Otros"
-    )
-  ) %>%
-  select(BloqueTematico, Variable, Casos_Yes = Conteo, Prevalencia_Pct = Porcentaje) %>%
-  arrange(BloqueTematico, desc(Prevalencia_Pct))
-
-
-heart_data %>%
-  select(any_of(todas_binarias)) %>%
-  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Respuesta") %>%
-  filter(!is.na(Respuesta)) %>%
-  count(Variable, Respuesta) %>%
-  group_by(Variable) %>%
-  mutate(Proporcion = n / sum(n)) %>%
-  ungroup() %>%
-  filter(Respuesta == "Yes") %>%
-  mutate(
+      TRUE                               ~ "Otros")) %>%
+  select(BloqueTematico, Variable, Casos_Yes = Conteo, Prevalencia_Pct = Porcentaje) %>%arrange(BloqueTematico, desc(Prevalencia_Pct))
+heart_data %>%select(any_of(todas_binarias)) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Respuesta") %>%filter(!is.na(Respuesta)) %>%count(Variable, Respuesta) %>%
+  group_by(Variable) %>%mutate(Proporcion = n / sum(n)) %>%
+  ungroup() %>%filter(Respuesta == "Yes") %>%mutate(
     BloqueTematico = case_when(
       Variable %in% habitos_binarios     ~ "1. Hábitos de Vida",
       Variable %in% patologias_binarias  ~ "2. Patologías y Antecedentes",
       Variable %in% prevencion_binarias  ~ "3. Prevención y Atención Médica",
       Variable %in% limitaciones_binarias  ~ "4. Limitaciones",
-      TRUE                               ~ "Otros"
-    )
-  ) %>%
-  ggplot(aes(x = reorder(Variable, Proporcion), y = Proporcion * 100, fill = BloqueTematico)) +
-  geom_col(width = 0.7, show.legend = FALSE) +
-  coord_flip() +
-  facet_wrap(~ BloqueTematico, scales = "free", ncol = 1) +
-  theme_minimal() +
-  labs(title = "Prevalencia de Indicadores Binarios por Dominio Clínico",
-       x = NULL, y = "Prevalencia (%)")
+      TRUE                               ~ "Otros")) %>%
+  ggplot(aes(x = reorder(Variable, Proporcion), y = Proporcion * 100, fill = BloqueTematico)) +geom_col(width = 0.7, show.legend = FALSE) +
+  coord_flip() +facet_wrap(~ BloqueTematico, scales = "free", ncol = 1) +
+  theme_minimal() +labs(title = "Distribución de variables binarios",x = NULL, y = "Respuestas positivas (%)")
 ```
 
 De esta manera, el análisis de cada grupo se vuelve más fácil.
@@ -718,7 +650,9 @@ variable que puede ser interpretada como binaria es la de `Sexo` , pero
 su balance hace que no aporte nada analizarla aquí.
 
 ```{r}
-heart_data %>% count(Sexo) %>% mutate(Porcentaje = round(n / sum(n) * 100, 2))
+heart_data %>% count(Sexo) %>% 
+  mutate(Porcentaje = round((n / sum(n)) * 100, 1)) %>% 
+  kable(col.names = c("Sexo", "Conteo", "Porcentaje (%)"), booktabs = TRUE)
 ```
 
 ### Variables Categóricas
@@ -732,35 +666,21 @@ más de información.
 Por tanto, vamos a comenzar graficando las variables que tienen cierto
 orden.
 
-```{r fig-multipanel-ordinales, fig.cap="Distribución porcentual conjunta de los factores ordinales respetando su jerarquía lógica.\\label{fig:ordinales_multipanel}",fig.width=8, fig.height=6, out.width="100%", warning=FALSE, message=FALSE}
-
+```{r fig-multipanel-ordinales, fig.cap="Distribución porcentual de los factores ordinales.\\label{fig:ordinales_multipanel}",fig.width=8, fig.height=6,, warning=FALSE, message=FALSE}
 #por como funcionan los factores tenemos que usar patchwork para construir los subplots. Creamos una funcion para no repetir la funcion 6 veces
-
 plot_ordinal <- function(var_name, title_text, bar_color = "#2b5c8f") {
-  heart_data %>%
-    filter(!is.na(.data[[var_name]])) %>%
-    count(.data[[var_name]]) %>%
-    mutate(Prop = (n / sum(n)) * 100) %>%
+  heart_data %>%filter(!is.na(.data[[var_name]])) %>%
+    count(.data[[var_name]]) %>%mutate(Prop = (n / sum(n)) * 100) %>%
     ggplot(aes(x = .data[[var_name]], y = Prop)) +
-    # Color fijo para todas las barras, eliminando el mapeo multicolor
-    geom_col(fill = bar_color, width = 0.7, color = "#1a365d", linewidth = 0.2) +
-    theme_minimal() +
-    labs(title = title_text, x = NULL, y = "Porcentaje (%)") +
-    theme(
+    geom_col(fill = bar_color, width = 0.7, color = "#1a365d", linewidth = 0.2) +theme_minimal() +labs(title = title_text, x = NULL, y = "Porcentaje (%)") +theme(
       axis.text.x = element_text(angle = 25, hjust = 1, size = 8),
-      plot.title = element_text(size = 10, face = "bold")
-    )
-}
-
-
+      plot.title = element_text(size = 10, face = "bold"))}
 g1 <- plot_ordinal("SaludGeneral", "Salud General", bar_color = "#2b5c8f")  
 g2 <- plot_ordinal("GrupoEdad", "Grupo de Edad", bar_color = "#2e8b57") 
 g3 <- plot_ordinal("DientesExtraidos", "Dientes Extraídos", bar_color = "#d97706")
-g4 <- plot_ordinal("EstadoFumador", "Estado Fumador", bar_color = "#7c3aed")  
+g4 <- plot_ordinal("EstadoFumador", "Estado Fumador", bar_color = "#7c3aed")
 g5 <- plot_ordinal("UsoCigarrilloElectronico", "Uso de Cigarrillo Electrónico", bar_color = "#0891b2")
 g6 <- plot_ordinal("UltimoChequeoMedico", "Último Chequeo Médico", bar_color = "#be123c")
-
-
 (g1 + g2) / (g3 + g4) / (g5 + g6)
 ```
 
@@ -774,47 +694,20 @@ tratado, aunque es más bien para tener una idea de qué son ya que además
 de ser dos variables que a priori no parecen muy importantes para la
 pregunta que queremos responder, son muy difíciles de interpretar.
 
-```{r fig-nominales, fig.cap="Distribución porcentual de las variables nominales (Raza y Región) ordenadas por frecuencia descendente.\\label{fig:nominales}", fig.width=8, fig.height=6, out.width="100%", warning=FALSE, message=FALSE}
+```{r fig-nominales, fig.cap="Distribución porcentual de las variables nominales.\\label{fig:nominales}", fig.width=5, fig.height=3, warning=FALSE, message=FALSE}
 #misma estructura que antes pero ahora ordenado de mayor a menor frecuencia. en el caso de estados seleccionamos solo el top 15
-
 plot_nominal <- function(var_name, title_text, bar_color) {
-  heart_data %>%
-    filter(!is.na(.data[[var_name]])) %>%
-    count(.data[[var_name]]) %>%
-    mutate(
-      Prop = (n / sum(n)) * 100,
-      Categoria = fct_reorder(.data[[var_name]], Prop, .desc = TRUE)
-    ) %>%
-    ggplot(aes(x = Categoria, y = Prop)) +
-    geom_col(fill = bar_color, width = 0.7, color = "#1a365d", linewidth = 0.2) +
-    theme_minimal() +
+  heart_data %>%filter(!is.na(.data[[var_name]])) %>%count(.data[[var_name]]) %>%mutate(Prop = (n / sum(n)) * 100,Categoria = fct_reorder(.data[[var_name]], Prop, .desc = TRUE)) %>%
+    ggplot(aes(x = Categoria, y = Prop)) +geom_col(fill = bar_color, width = 0.7, color = "#1a365d", linewidth = 0.2) +theme_minimal() +
     labs(title = title_text, x = NULL, y = "Porcentaje (%)") +
-    theme(
-      axis.text.x = element_text(angle = 25, hjust = 1, size = 8),
-      plot.title = element_text(size = 10, face = "bold")
-    )
-}
-
-
+    theme(axis.text.x = element_text(angle = 25, hjust = 1, size = 8),
+      plot.title = element_text(size = 10, face = "bold"))}
 g_raza <- plot_nominal("RazaEtnia", "Distribución por Raza / Etnia", bar_color = "#3b82f6")
-g_region <- heart_data %>%
-  filter(!is.na(Estado)) %>%
+g_region <- heart_data %>%filter(!is.na(Estado)) %>%
   mutate(Estado = fct_lump_n(Estado, n = 15, other_level = "Otros")) %>%
-  count(Estado) %>%
-  mutate(
-    Prop = (n / sum(n)) * 100,
-    Estado = fct_reorder(Estado, Prop, .desc = TRUE)
-  ) %>%
-  ggplot(aes(x = Estado, y = Prop)) +
-  geom_col(fill = "#10b981", width = 0.7, color = "#1a365d", linewidth = 0.2) +
-  theme_minimal() +
-  labs(title = "Distribución Geográfica (Top 15 Estados)", x = NULL, y = "Porcentaje (%)") +
-  theme(
+  count(Estado) %>%mutate(Prop = (n / sum(n)) * 100,Estado = fct_reorder(Estado, Prop, .desc = TRUE)) %>%ggplot(aes(x = Estado, y = Prop)) +geom_col(fill = "#10b981", width = 0.7, color = "#1a365d", linewidth = 0.2) +theme_minimal() +labs(title = "Distribución Geográfica (Top 15 Estados)", x = NULL, y = "Porcentaje (%)") +theme(
     axis.text.x = element_text(angle = 25, hjust = 1, size = 9),
-    plot.title = element_text(size = 11, face = "bold")
-  )
-
-
+    plot.title = element_text(size = 11, face = "bold"))
 g_raza + g_region
 ```
 
@@ -848,11 +741,9 @@ calcular el coeficiente V de Cramer para tener una medida de que tan
 redundantes son las variables.
 
 ```{r}
-assocstats(table(heart_data$DificultadCaminar, heart_data$DificultadVestirseBanarse, useNA = "no"))
-cat('________________________________\n')
-assocstats(table(heart_data$DificultadCaminar, heart_data$DificultadTareasDiarias, useNA = "no"))
-cat('________________________________\n')
-assocstats(table(heart_data$DificultadVestirseBanarse, heart_data$DificultadTareasDiarias, useNA = "no"))
+cat(sprintf("V de Cramér (Caminar vs. Vestirse/Bañarse): %.4f\n", assocstats(table(heart_data$DificultadCaminar, heart_data$DificultadVestirseBanarse, useNA = "no"))$cramer))
+cat(sprintf("V de Cramér (Caminar vs. Tareas Diarias): %.4f\n", assocstats(table(heart_data$DificultadCaminar, heart_data$DificultadTareasDiarias, useNA = "no"))$cramer))
+cat(sprintf("V de Cramér (Vestirse/Bañarse vs. Tareas Diarias): %.4f\n", assocstats(table(heart_data$DificultadVestirseBanarse, heart_data$DificultadTareasDiarias, useNA = "no"))$cramer))
 ```
 
 Los valores del estadístico no son despreciables, pero tampoco son
@@ -869,10 +760,19 @@ Kruskal-Wallis. Para complementar esta información también utilizaremos
 el test de Spearman.
 
 ```{r}
-kruskal.test(DiasMalaSaludFisica ~ SaludGeneral, data = heart_data)
-cor.test(as.numeric(heart_data$SaludGeneral), heart_data$DiasMalaSaludFisica, method = "spearman")
-kruskal.test(DiasMalaSaludMental ~ SaludGeneral, data = heart_data)
-cor.test(as.numeric(heart_data$SaludGeneral), heart_data$DiasMalaSaludMental, method = "spearman")
+kw1 <- kruskal.test(DiasMalaSaludFisica ~ SaludGeneral, data = heart_data)
+cat(sprintf("Kruskal (Salud Física ~ Salud General):, p-valor %s\n", format.pval(kw1$p.value, eps = 1e-16)))
+
+sp1 <- cor.test(as.numeric(heart_data$SaludGeneral), heart_data$DiasMalaSaludFisica, method = "spearman", exact = FALSE)
+cat(sprintf("Spearman (Salud General vs. Salud Física): $\\rho$ = %.4f \n", 
+sp1$estimate))
+
+kw2 <- kruskal.test(DiasMalaSaludMental ~ SaludGeneral, data = heart_data)
+cat(sprintf("Kruskal (Salud Mental ~ Salud General): p-valor %s\n", format.pval(kw2$p.value, eps = 1e-16)))
+
+sp2 <- cor.test(as.numeric(heart_data$SaludGeneral), heart_data$DiasMalaSaludMental, method = "spearman", exact = FALSE)
+cat(sprintf("Spearman (Salud General vs. Salud Mental): $\\rho$ = %.4f \n", 
+sp2$estimate))
 ```
 
 El test de Kruskal con p valor bajo nos dice que hay cierta relación
@@ -890,8 +790,11 @@ comparar una variable numérica con una binaria, y apoyándonos en
 Spearman para identificar la intensidad de la relación.
 
 ```{r}
-wilcox.test(DiasMalaSaludMental ~ TrastornoDepresivo, data = heart_data)
-cor.test(as.numeric(heart_data$TrastornoDepresivo), heart_data$DiasMalaSaludMental, method = "spearman")
+wt <- wilcox.test(DiasMalaSaludMental ~ TrastornoDepresivo, data = heart_data)
+cat(sprintf("Wilcoxon test (Salud Mental ~ Depresión):  p-valor %s\n", format.pval(wt$p.value, eps = 1e-16)))
+sp <- cor.test(as.numeric(heart_data$TrastornoDepresivo), heart_data$DiasMalaSaludMental, method = "spearman", exact = FALSE)
+cat(sprintf("Spearman (Depresión vs. Salud Mental): $\\rho$ = %.4f \n", 
+sp$estimate))
 ```
 
 De nuevo, la relación parece ser existente, pero Spearman nos dice que
@@ -905,7 +808,7 @@ relacionadas así que vamos a utilizar la V de Cramer para comparar ambas
 variables.
 
 ```{r}
-assocstats(table(heart_data$EstadoFumador, heart_data$UsoCigarrilloElectronico, useNA = "no"))
+cat(sprintf("V de Cramér (Fumador vs. Cigarrillo Electrónico): %.4f\n", assocstats(table(heart_data$EstadoFumador, heart_data$UsoCigarrilloElectronico, useNA = "no"))$cramer))
 ```
 
 El valor del estadístico es bastante bajo, lo cual nos dice que a priori
@@ -943,7 +846,13 @@ for (var in predictors) {
     cramer_res <- assocstats(tabla)$cramer
     influencia[var] <- cramer_res}}
 influencia_ordenada <- sort(influencia, decreasing = TRUE)
-print(influencia_ordenada)
+df_influencia_ordenada <- data.frame(Variable = names(influencia_ordenada),
+  Influencia = as.numeric(influencia_ordenada))
+tabla_resumen <- bind_rows(head(df_influencia_ordenada, 5),
+  data.frame(Variable = "...", Influencia = NA),tail(df_influencia_ordenada, 5))
+kable(tabla_resumen, col.names = c("Predictor", "Influencia"), digits = 4, 
+      caption = "Mayores y menores influencias en la target.", 
+      booktabs = TRUE) %>%kable_styling(font_size = 6, latex_options = "hold_position")
 ```
 
 Vemos como variables como la edad o el número de enfermedades son las
@@ -1034,7 +943,7 @@ de días.
 
 Por último podemos comparar variables binarrias con heat maps.
 
-```{r heatmap-binarias, echo=TRUE, warning=FALSE, message=FALSE, fig.width=7, fig.height=6}
+```{r heatmap-binarias, echo=TRUE, warning=FALSE, message=FALSE, fig.width=6, fig.height=4}
 crear_heatmap_binaria <- function(data, var_binaria, titulo) {
   data %>%count(EnfermedadCardiaca, !!sym(var_binaria)) %>%
     mutate(Proporcion = n / sum(n)) %>%
