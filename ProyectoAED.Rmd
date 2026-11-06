@@ -72,36 +72,32 @@ pacman::p_load(
 Las enfermedades cardiovasculares representan una de las principales
 causas de mortalidad a nivel global. Según la Organización Mundial de la
 Salud (OMS), estas patologías son responsables de aproximadamente un 32%
-de todas las muertes en el mundo. Por tanto,
-lograr identificar de forma precoz a los pacientes susceptibles de
-padecerlas puede salvar multitud de vidas, especialmente considerando
-que el diagnóstico de estas enfermedades suele producirse en fases
-avanzadas.
+de todas las muertes en el mundo. Por tanto, lograr identificar de forma
+precoz a los pacientes susceptibles de padecerlas puede salvar multitud
+de vidas, especialmente considerando que el diagnóstico de estas
+enfermedades suele producirse en fases avanzadas.
 
 El objetivo principal de este estudio es analizar los datos procedentes
 de la encuesta epidemiológica anual del *Centers for Disease Control and
-Prevention* (CDC), procesados y disponibles en Kaggle, para establecer relaciones entre diversas
-variables explicativas y la aparición de cardiopatías. El conjunto de
-datos está compuesto por 40 variables, incluyendo datos demográficos,
-hábitos de vida y la presencia de otras patologías secundarias, junto
-con una variable objetivo binaria que indica la presencia de enfermedad
-cardíaca. Al disponer de una muestra amplia de aproximadamente 246.000
-observaciones, se cuenta con una base sólida para trabajar sobre los
-datos de forma robusta.
+Prevention* (CDC), procesados y disponibles en Kaggle, para establecer
+relaciones entre diversas variables explicativas y la aparición de
+cardiopatías. El conjunto de datos está compuesto por 40 variables,
+incluyendo datos demográficos, hábitos de vida y la presencia de otras
+patologías secundarias, junto con una variable objetivo binaria que
+indica la presencia de enfermedad cardíaca. Al disponer de una muestra
+amplia de aproximadamente 246.000 observaciones, se cuenta con una base
+sólida para trabajar sobre los datos de forma robusta.
+
+El presente análisis se articula en torno a la pregunta de si existe una
+relación directa entre los hábitos de vida, las características
+sociodemográficas y la presencia de patologías previas u otras variables
+con el riesgo de padecer enfermedades cardiovasculares.
 
 El análisis exploratorio de datos (EDA) consistirá en un primer
 preprocesamiento y limpieza de los datos (tratamiento de valores
 perdidos y tipado de variables), seguido de un análisis mediante la
-visualización de relaciones entre variables con gráficos estadísticos.
-
-A partir de este conjunto de datos, el presente análisis se articula en
-torno a la siguiente pregunta principal de investigación:
-
-¿Existe una relación directa entre los hábitos de vida, las
-características sociodemográficas y la presencia de patologías previas u
-otras variables con el riesgo de padecer enfermedades cardiovasculares?
-
-El análisis exploratorio buscará identificar cuáles de estas variables
+visualización de relaciones entre variables con gráficos
+estadísticosAdemás, buscará identificar cuáles de estas variables
 muestran una mayor asociación con las cardiopatías, cómo interactúan
 entre sí y qué patrones o perfiles de pacientes presentan una mayor
 vulnerabilidad.
@@ -375,10 +371,10 @@ son puntos aislados ni errores tipográficos, sino una nube continua que
 se extiende hasta valores extremos, confirmando que se trata de
 individuos con obesidad severa real que deben conservarse en la muestra.
 
-- **Comparativa de cortes:** La regla 3 Sigma deja una franja alta de
-  puntos clasificados como normales (debido a la varianza inflada),
-  mientras que la regla del Boxplot y el identificador Hampel capturan
-  de forma equilibrada la masa de valores atípicos.
+-   **Comparativa de cortes:** La regla 3 Sigma deja una franja alta de
+    puntos clasificados como normales (debido a la varianza inflada),
+    mientras que la regla del Boxplot y el identificador Hampel capturan
+    de forma equilibrada la masa de valores atípicos.
 
 ## Imputación de Variables Numéricas
 
@@ -415,31 +411,6 @@ restantes, el conjunto de datos final cuenta con 267.281 observaciones y
 cero valores perdidos en la totalidad de sus 40 variables, quedando
 perfectamente acondicionado para los análisis univariante, bivariante y
 multivariante.
-
-## 2.10. Estrategia de Análisis Estadístico
-
-Para dar respuesta a las preguntas planteadas, estudiaremos el conjunto
-de datos en dos etapas:
-
-- **Análisis Univariante:** Se examinará de forma individual la
-  distribución y el comportamiento de cada variable del conjunto de
-  datos. En el caso de las variables cuantitativas, se calculará
-  estadísticos de tendencia central (media y mediana) y de dispersión
-  clásicos y robustos (desviación típica, rango intercuartílico y MADM).
-  Su representación visual se realizará mediante histogramas y gráficos
-  de densidad, evaluando la normalidad de las distribuciones a través de
-  QQ-plots. Las variables cualitativas y factores se caracterizarán
-  mediante distribuciones de frecuencias absolutas y relativas, apoyadas
-  en diagramas de barras.
-- **Análisis Bivariante:** Se estudiarán las relaciones entre
-  variables adaptando la técnica a su naturaleza. Para variables
-  categóricas se utilizará la V de Cramér y gráficos de barras, además de mapas de calor cuando sean binarias las variables. En el caso de variables ordinales y
-  cuantitativas no normales, se emplearán la correlación de Spearman y
-  contrastes no paramétricos como Kruskal-Wallis y Wilcoxon,
-  complementados con *boxplots cuando se requieran*. Dado el elevado
-  tamaño muestral ($N > 10^5$), la interpretación se centrará en el
-  tamaño del efecto más que en la significación de los $p$-valores, pero
-  los test se efectuaran igualmente.
 
 # Resultados
 
@@ -516,34 +487,25 @@ kable(estadisticos_num, caption = "Estadísticos para variables cuantitativas.",
   kable_styling(font_size = 6, latex_options = "hold_position")
 ```
 
-Al observar la tabla nos damos cuenta de varias cosas:
-
-- En `DiasMalaSaludFisica` y `DiasMalaSaludMental`, la mediana y el MADM
-  son 0 (la mayoría de los individuos dicen no tener días de enfermedad,
-  como habíamos visto), mientras que la media se sitúa en torno a 4 días
-  con una desviación típica de más de 8 días, claramente inflada por los
-  individuos con patologías crónicas graves (30 días).
-
-- En el `IMC` y el `PesoKilogramos`, la media es superior a la mediana
-  debido a la presencia de casos con obesidad severa en la cola superior
-  de la distribución.
-
-- La variable `NumeroEnfermedades` es numérica pero es basicamente un
-  factor, ya que hay poco rango de enfermedades que se pueden padecer.
-  El valor medio y mediano ronda 1 enfermedad por persona pero su
-  distribución no merece la pena representarse gráficamente por ahora.
-
-- En cuanto al sesgo, como cabría esperar, las variables más asimétricas
-  son las que más sesgo tienen. Además, vemos que `IMC` tiene un sesgo
-  no despreciable, lo que sugiere que la distribución quizás no es
-  normal.
-
-- La curtosis nos revela también que las colas de `IMC` y de
-  `HorasSueno` son demasiado anchas, así que probablemente no nos
-  encontramos ante distribuciones normales.
-
-- `AlturaMetros` sí parece seguir algo parecido a una normal debido a su
-  curtosis y sesgo.
+Podemos extraer ciertas conclusiones a partir de aquí. En
+`DiasMalaSaludFisica` y `DiasMalaSaludMental`, la mediana y el MADM son
+0 (la mayoría de los individuos dicen no tener días de enfermedad),
+mientras que la media se sitúa en torno a 4 días con una desviación
+típica de más de 8 días, claramente inflada por los individuos con
+patologías crónicas graves. En el `IMC` y el `PesoKilogramos`, la media
+es superior a la mediana debido a la presencia de casos con obesidad
+severa en la cola superior de la distribución. La variable
+`NumeroEnfermedades` es numérica pero es basicamente un factor, ya que
+hay poco rango de enfermedades que se pueden padecer. El valor medio y
+mediano ronda 1 enfermedad por persona pero su distribución no merece la
+pena representarse gráficamente por ahora. En cuanto al sesgo, como
+cabría esperar, las variables más asimétricas son las que más sesgo
+tienen. Además, vemos que `IMC` tiene un sesgo no despreciable, lo que
+sugiere que la distribución quizás no es normal. La curtosis nos revela
+también que las colas de `IMC` y de `HorasSueno` son demasiado anchas,
+así que probablemente no nos encontramos ante distribuciones normales.
+`AlturaMetros` sí parece seguir algo parecido a una normal debido a su
+curtosis y sesgo.
 
 Como último paso para este tipo de variables vamos a comprobar la
 normalidad con Q-Q plots, ya que los test de normalidad se ven muy
@@ -629,19 +591,14 @@ heart_data %>%select(any_of(todas_binarias)) %>%
 
 De esta manera, el análisis de cada grupo se vuelve más fácil.
 
-- Los hábitos de vida son solo 2, así que solo podemos comentar que son
-  variables muy balanceadas.
-
-- Las patologías tienden a ser más raras y por tanto conviene llevar
-  cuidado con el desbalanceo de clases.
-
-- El tercer gráfico correspondiente a la atención médica y prevenciones
-  detaca que volvemos a tener variables más o menos balanceadas
-  exceptuando `ConductaAltoRiesgo`.
-
-- Por último exploramos las variables que expresan las dificultades en
-  distintos ámbitos de la vida, que por supuesto son variables bastante
-  desbalanceadas a favor del no.
+Los hábitos de vida son solo 2, así que solo podemos comentar que son
+variables muy balanceadas. Las patologías tienden a ser más raras y por
+tanto conviene llevar cuidado con el desbalanceo de clases. El tercer
+gráfico correspondiente a la atención médica y prevenciones detaca que
+volvemos a tener variables más o menos balanceadas exceptuando
+`ConductaAltoRiesgo`. Por último exploramos las variables que expresan
+las dificultades en distintos ámbitos de la vida, que por supuesto son
+variables bastante desbalanceadas a favor del no.
 
 Por último, conviene destacar que al igual que con diabetes alguna
 variable podría perder algo de información para volverse binaria y
@@ -672,8 +629,7 @@ plot_ordinal <- function(var_name, title_text, bar_color = "#2b5c8f") {
   heart_data %>%filter(!is.na(.data[[var_name]])) %>%
     count(.data[[var_name]]) %>%mutate(Prop = (n / sum(n)) * 100) %>%
     ggplot(aes(x = .data[[var_name]], y = Prop)) +
-    geom_col(fill = bar_color, width = 0.7, color = "#1a365d", linewidth = 0.2) +theme_minimal() +labs(title = title_text, x = NULL, y = "Porcentaje (%)") +theme(
-      axis.text.x = element_text(angle = 25, hjust = 1, size = 8),
+    geom_col(fill = bar_color, width = 0.7, color = "#1a365d", linewidth = 0.2) +theme_minimal() +labs(title = title_text, x = NULL, y = "Porcentaje (%)") +theme(axis.text.x = element_text(angle = 25, hjust = 1, size = 8),
       plot.title = element_text(size = 10, face = "bold"))}
 g1 <- plot_ordinal("SaludGeneral", "Salud General", bar_color = "#2b5c8f")  
 g2 <- plot_ordinal("GrupoEdad", "Grupo de Edad", bar_color = "#2e8b57") 
@@ -753,11 +709,9 @@ para eliminar alguna.
 
 El siguiente grupo de variables a estudiar es uno formado por la salud
 general autopercibida y las variables de dias de malestar, tanto físico
-como mental. Para este caso, altener una variable categórica y otra
-numérica una opción sería hacer un ANOVA, pero en este caso es más
-práctico aprovechar que el factor está ordenado y utilizar el test de
-Kruskal-Wallis. Para complementar esta información también utilizaremos
-el test de Spearman.
+como mental. Para este caso, es más práctico aprovechar que el factor
+está ordenado y utilizar el test de Kruskal-Wallis. Para complementar
+esta información también utilizaremos el test de Spearman.
 
 ```{r}
 kw1 <- kruskal.test(DiasMalaSaludFisica ~ SaludGeneral, data = heart_data)
