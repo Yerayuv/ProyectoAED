@@ -86,22 +86,16 @@ cardiopatías. El conjunto de datos está compuesto por 40 variables,
 incluyendo datos demográficos, hábitos de vida y la presencia de otras
 patologías secundarias, junto con una variable objetivo binaria que
 indica la presencia de enfermedad cardíaca. Al disponer de una muestra
-amplia de aproximadamente 246.000 observaciones, se cuenta con una base
-sólida para trabajar sobre los datos de forma robusta.
-
-El presente análisis se articula en torno a la pregunta de si existe una
-relación directa entre los hábitos de vida, las características
-sociodemográficas y la presencia de patologías previas u otras variables
-con el riesgo de padecer enfermedades cardiovasculares.
+amplia de aproximadamente 246.000 observaciones completas, se cuenta con
+una base sólida para trabajar sobre los datos de forma robusta.
 
 El análisis exploratorio de datos (EDA) consistirá en un primer
 preprocesamiento y limpieza de los datos (tratamiento de valores
 perdidos y tipado de variables), seguido de un análisis mediante la
-visualización de relaciones entre variables con gráficos
-estadísticosAdemás, buscará identificar cuáles de estas variables
-muestran una mayor asociación con las cardiopatías, cómo interactúan
-entre sí y qué patrones o perfiles de pacientes presentan una mayor
-vulnerabilidad.
+visualización de relaciones entre variables con gráficos estadísticos.
+Además, buscará identificar cuáles de estas variables muestran una mayor
+asociación con las cardiopatías, cómo interactúan entre sí y qué
+patrones o perfiles de pacientes presentan una mayor vulnerabilidad.
 
 # Métodos y Materiales
 
@@ -151,66 +145,31 @@ de miocardio HadHeartAttack o angina de pecho HadAngina).
 ```{r carga_y_tipado}
 # Carga reproducible
 heart_raw <- read_csv("data/heart_2022_with_nans.csv.gz")
-
 # Renombrado de variables a español
-heart_data <- heart_raw %>%
-  rename(
+heart_data <- heart_raw %>%rename(
     Estado = State, Sexo = Sex, SaludGeneral = GeneralHealth,
-    DiasMalaSaludFisica = PhysicalHealthDays, DiasMalaSaludMental = MentalHealthDays,
-    UltimoChequeoMedico = LastCheckupTime, ActividadFisica = PhysicalActivities,
-    HorasSueno = SleepHours, DientesExtraidos = RemovedTeeth,
-    InfartoMiocardio = HadHeartAttack, AnginaPecho = HadAngina, Ictus = HadStroke,
-    Asma = HadAsthma, CancerPiel = HadSkinCancer, EPOC = HadCOPD,
-    TrastornoDepresivo = HadDepressiveDisorder, EnfermedadRenal = HadKidneyDisease,
-    Artritis = HadArthritis, Diabetes = HadDiabetes, DificultadAuditiva = DeafOrHardOfHearing,
-    DificultadVisual = BlindOrVisionDifficulty, DificultadConcentracion = DifficultyConcentrating,
-    DificultadCaminar = DifficultyWalking, DificultadVestirseBanarse = DifficultyDressingBathing,
-    DificultadTareasDiarias = DifficultyErrands, EstadoFumador = SmokerStatus,
-    UsoCigarrilloElectronico = ECigaretteUsage, TomografiaTorax = ChestScan,
-    RazaEtnia = RaceEthnicityCategory, GrupoEdad = AgeCategory, AlturaMetros = HeightInMeters,
-    PesoKilogramos = WeightInKilograms, IMC = BMI, ConsumidorAlcohol = AlcoholDrinkers,
-    PruebaVIH = HIVTesting, VacunaGripeUltimoAno = FluVaxLast12, VacunaNeumococo = PneumoVaxEver,
-    VacunaTetanos10Anos = TetanusLast10Tdap, ConductaAltoRiesgo = HighRiskLastYear, CovidPositivo = CovidPos
-  )
-
+    DiasMalaSaludFisica = PhysicalHealthDays, DiasMalaSaludMental = MentalHealthDays,UltimoChequeoMedico = LastCheckupTime, ActividadFisica = PhysicalActivities,HorasSueno = SleepHours, DientesExtraidos = RemovedTeeth,
+    InfartoMiocardio = HadHeartAttack, AnginaPecho = HadAngina, Ictus = HadStroke,Asma = HadAsthma, CancerPiel = HadSkinCancer, EPOC = HadCOPD,
+    TrastornoDepresivo = HadDepressiveDisorder, EnfermedadRenal = HadKidneyDisease,Artritis = HadArthritis, Diabetes = HadDiabetes, DificultadAuditiva = DeafOrHardOfHearing,
+    DificultadVisual = BlindOrVisionDifficulty, DificultadConcentracion = DifficultyConcentrating,DificultadCaminar = DifficultyWalking, DificultadVestirseBanarse = DifficultyDressingBathing,DificultadTareasDiarias = DifficultyErrands, EstadoFumador = SmokerStatus,UsoCigarrilloElectronico = ECigaretteUsage, TomografiaTorax = ChestScan,RazaEtnia = RaceEthnicityCategory, GrupoEdad = AgeCategory, AlturaMetros = HeightInMeters,
+    PesoKilogramos = WeightInKilograms, IMC = BMI, ConsumidorAlcohol = AlcoholDrinkers,PruebaVIH = HIVTesting, VacunaGripeUltimoAno = FluVaxLast12, VacunaNeumococo = PneumoVaxEver,VacunaTetanos10Anos = TetanusLast10Tdap, ConductaAltoRiesgo = HighRiskLastYear, CovidPositivo = CovidPos)
 # Tipado de variables y creación de HeartDisease
-heart_data <- heart_data %>%
-  mutate(
-    EnfermedadCardiaca = factor(if_else(InfartoMiocardio == "Yes" | AnginaPecho == "Yes", "Yes", "No"), levels = c("No", "Yes")),
-    Diabetes = factor(case_when(
+heart_data <- heart_data %>%mutate(
+    EnfermedadCardiaca = factor(if_else(InfartoMiocardio == "Yes" | AnginaPecho == "Yes", "Yes", "No"), levels = c("No", "Yes")),Diabetes = factor(case_when(
       Diabetes %in% c("Yes", "No, pre-diabetes or borderline diabetes") ~ "Yes",
       Diabetes %in% c("No", "Yes, but only during pregnancy (female)") ~ "No",
       TRUE ~ NA_character_
-    ), levels = c("No", "Yes")),
-    SaludGeneral = factor(SaludGeneral, levels = c("Poor", "Fair", "Good", "Very good", "Excellent"), ordered = TRUE),
+    ), levels = c("No", "Yes")),SaludGeneral = factor(SaludGeneral, levels = c("Poor", "Fair", "Good", "Very good", "Excellent"), ordered = TRUE),
     GrupoEdad = factor(GrupoEdad, levels = c(
       "Age 18 to 24", "Age 25 to 29", "Age 30 to 34", "Age 35 to 39", "Age 40 to 44", "Age 45 to 49",
-      "Age 50 to 54", "Age 55 to 59", "Age 60 to 64", "Age 65 to 69", "Age 70 to 74", "Age 75 to 79", "Age 80 or older"
-    ), ordered = TRUE),
-    DientesExtraidos = factor(DientesExtraidos, levels = c("None of them", "1 to 5", "6 or more, but not all", "All"), ordered = TRUE),
-    EstadoFumador = factor(EstadoFumador, levels = c(
-      "Never smoked", "Former smoker", "Current smoker - now smokes some days", "Current smoker - now smokes every day"
-    ), ordered = TRUE),
-    UsoCigarrilloElectronico = factor(UsoCigarrilloElectronico, levels = c(
-      "Never used e-cigarettes in my entire life", "Not at all (right now)", "Use them some days", "Use them every day"
-    ), ordered = TRUE),
+      "Age 50 to 54", "Age 55 to 59", "Age 60 to 64", "Age 65 to 69", "Age 70 to 74", "Age 75 to 79", "Age 80 or older"), ordered = TRUE),
+    DientesExtraidos = factor(DientesExtraidos, levels = c("None of them", "1 to 5", "6 or more, but not all", "All"), ordered = TRUE),EstadoFumador = factor(EstadoFumador, levels = c("Never smoked", "Former smoker", "Current smoker - now smokes some days", "Current smoker - now smokes every day"), ordered = TRUE),UsoCigarrilloElectronico = factor(UsoCigarrilloElectronico, levels = c(
+      "Never used e-cigarettes in my entire life", "Not at all (right now)", "Use them some days", "Use them every day"), ordered = TRUE),
     UltimoChequeoMedico = factor(UltimoChequeoMedico, levels = c(
-      "Within past year (anytime less than 12 months ago)", "Within past 2 years (1 year but less than 2 years ago)",
-      "Within past 5 years (2 years but less than 5 years ago)", "5 or more years ago"
-    ), ordered = TRUE),
-    CovidPositivo = factor(case_when(CovidPositivo == "No" ~ "No", str_detect(CovidPositivo, "positive|Yes") ~ "Yes", TRUE ~ NA_character_), levels = c("No", "Yes")),
-    VacunaTetanos10Anos = factor(case_when(str_detect(VacunaTetanos10Anos, "^No") ~ "No", str_detect(VacunaTetanos10Anos, "^Yes") ~ "Yes", TRUE ~ NA_character_), levels = c("No", "Yes")),
-    TotalEnfermedades = rowSums(across(c(Ictus, Diabetes, Asma, EPOC, EnfermedadRenal, Artritis, CancerPiel, TrastornoDepresivo), ~ .x == "Yes"), na.rm = TRUE),
-    across(where(is.character), as.factor)
-  )
-
+      "Within past year (anytime less than 12 months ago)", "Within past 2 years (1 year but less than 2 years ago)","Within past 5 years (2 years but less than 5 years ago)", "5 or more years ago"), ordered = TRUE),
+    CovidPositivo = factor(case_when(CovidPositivo == "No" ~ "No", str_detect(CovidPositivo, "positive|Yes") ~ "Yes", TRUE ~ NA_character_), levels = c("No", "Yes")),VacunaTetanos10Anos = factor(case_when(str_detect(VacunaTetanos10Anos, "^No") ~ "No", str_detect(VacunaTetanos10Anos, "^Yes") ~ "Yes", TRUE ~ NA_character_), levels = c("No", "Yes")),TotalEnfermedades = rowSums(across(c(Ictus, Diabetes, Asma, EPOC, EnfermedadRenal, Artritis, CancerPiel, TrastornoDepresivo), ~ .x == "Yes"), na.rm = TRUE),across(where(is.character), as.factor))
 # Resumen del dataset
-tabla_resumen <- tibble(
-  Métrica = c("Total Observaciones", "Variables Totales", "Casos Cardiopatía (Yes)", "Casos Sin Cardiopatía (No)", "Prevalencia Cardiopatía (%)"),
-  Valor = c(as.character(nrow(heart_data)), as.character(ncol(heart_data)), sum(heart_data$EnfermedadCardiaca == "Yes", na.rm = TRUE),
-            sum(heart_data$EnfermedadCardiaca == "No", na.rm = TRUE), paste(round(mean(heart_data$EnfermedadCardiaca == "Yes", na.rm = TRUE) * 100, 2), "%"))
-)
-
+tabla_resumen <- tibble(Métrica = c("Total Observaciones", "Variables Totales", "Casos Cardiopatía (Yes)", "Casos Sin Cardiopatía (No)", "Prevalencia Cardiopatía (%)"),Valor = c(as.character(nrow(heart_data)), as.character(ncol(heart_data)), sum(heart_data$EnfermedadCardiaca == "Yes", na.rm = TRUE),sum(heart_data$EnfermedadCardiaca == "No", na.rm = TRUE), paste(round(mean(heart_data$EnfermedadCardiaca == "Yes", na.rm = TRUE) * 100, 2), "%")))
 kable(tabla_resumen, caption = "Dimensiones iniciales y prevalencia de cardiopatías.")
 ```
 
@@ -225,13 +184,10 @@ consistencia entre el índice de masa corporal, el peso y la altura.
 infinitos <- sapply(heart_data %>% select(where(is.numeric)), function(x) sum(is.infinite(x)))
 menores_cero <- sapply(heart_data %>% select(where(is.numeric)), function(x) sum(x < 0, na.rm = TRUE))
 inconsistencias_bmi <- sum(abs(heart_data$IMC - (heart_data$PesoKilogramos / heart_data$AlturaMetros^2)) > 1.5, na.rm = TRUE)
-
 # Corrección de inconsistencias biológicas imposibles a NA
-heart_data <- heart_data %>%
-  mutate(
+heart_data <- heart_data %>%mutate(
     HorasSueno = if_else(HorasSueno <= 2 | HorasSueno >= 20, NA_real_, HorasSueno),
-    AlturaMetros = if_else(AlturaMetros < 1.0, NA_real_, AlturaMetros)
-  )
+    AlturaMetros = if_else(AlturaMetros < 1.0, NA_real_, AlturaMetros))
 ```
 
 Tras la verificación, se comprobó la ausencia de valores infinitos y de
@@ -252,16 +208,9 @@ las variables y se evalúa la proporción de casos completos.
 # Cálculo de NAs por columna
 nas_columna <- colSums(is.na(heart_data))
 pct_nas <- round((nas_columna / nrow(heart_data)) * 100, 2)
-
 # Tabla maquetada con las 5 variables de mayor volumen de NAs
-tabla_nas <- tibble(
-  Variable = names(nas_columna),
-  Num_NAs = nas_columna,
-  Porcentaje = paste(pct_nas, " %")
-) %>%
-  filter(Num_NAs > 0) %>%
-  arrange(desc(Num_NAs))
-
+tabla_nas <- tibble(Variable = names(nas_columna),Num_NAs = nas_columna,
+  Porcentaje = paste(pct_nas, " %")) %>%filter(Num_NAs > 0) %>%arrange(desc(Num_NAs))
 kable(head(tabla_nas, 5), caption = "Variables con mayor proporción de valores perdidos.")
 ```
 
@@ -289,26 +238,19 @@ reglasigma     <- function(x) abs(x - mean(x, na.rm = TRUE)) > 3 * sd(x, na.rm =
 reglahampel    <- function(x) abs(x - median(x, na.rm = TRUE)) > 3 * (1.4826 * median(abs(x - median(x, na.rm = TRUE)), na.rm = TRUE))
 reglaboxplot   <- function(x) { q <- quantile(x, c(0.25, 0.75), na.rm = TRUE); x < q[1] - 1.5 * diff(q) | x > q[2] + 1.5 * diff(q) }
 reglapercentil <- function(x) { p <- quantile(x, c(0.05, 0.95), na.rm = TRUE); x < p[1] | x > p[2] }
-
 # Clasificación de outliers sobre IMC
 heart_outliers <- heart_data %>%
   mutate(IMC_Sigma = reglasigma(IMC), IMC_Hampel = reglahampel(IMC),
          IMC_Boxplot = reglaboxplot(IMC), IMC_Percentil = reglapercentil(IMC))
-
 # Umbrales y comparativa de métodos
 m_imc <- mean(heart_data$IMC, na.rm = TRUE); s_imc <- sd(heart_data$IMC, na.rm = TRUE)
 med_imc <- median(heart_data$IMC, na.rm = TRUE); mad_imc <- 1.4826 * median(abs(heart_data$IMC - med_imc), na.rm = TRUE)
 q_imc <- quantile(heart_data$IMC, c(0.25, 0.75), na.rm = TRUE); p_imc <- quantile(heart_data$IMC, c(0.05, 0.95), na.rm = TRUE)
-
 tabla_outliers <- tibble(
   Método = c("Regla 3 Sigma", "Identificador Hampel", "Regla Boxplot", "Percentiles (5% - 95%)"),
-  Outliers_Detectados = c(sum(heart_outliers$IMC_Sigma, na.rm = TRUE), sum(heart_outliers$IMC_Hampel, na.rm = TRUE),
-                         sum(heart_outliers$IMC_Boxplot, na.rm = TRUE), sum(heart_outliers$IMC_Percentil, na.rm = TRUE)),
-  Porcentaje = paste(round(c(mean(heart_outliers$IMC_Sigma, na.rm = TRUE), mean(heart_outliers$IMC_Hampel, na.rm = TRUE),
-                             mean(heart_outliers$IMC_Boxplot, na.rm = TRUE), mean(heart_outliers$IMC_Percentil, na.rm = TRUE)) * 100, 2), "%"),
+  Outliers_Detectados = c(sum(heart_outliers$IMC_Sigma, na.rm = TRUE), sum(heart_outliers$IMC_Hampel, na.rm = TRUE),sum(heart_outliers$IMC_Boxplot, na.rm = TRUE), sum(heart_outliers$IMC_Percentil, na.rm = TRUE)),Porcentaje = paste(round(c(mean(heart_outliers$IMC_Sigma, na.rm = TRUE), mean(heart_outliers$IMC_Hampel, na.rm = TRUE),mean(heart_outliers$IMC_Boxplot, na.rm = TRUE), mean(heart_outliers$IMC_Percentil, na.rm = TRUE)) * 100, 2), "%"),
   Umbral_Inferior = round(c(m_imc - 3 * s_imc, med_imc - 3 * mad_imc, q_imc[1] - 1.5 * diff(q_imc), p_imc[1]), 2),
-  Umbral_Superior = round(c(m_imc + 3 * s_imc, med_imc + 3 * mad_imc, q_imc[2] + 1.5 * diff(q_imc), p_imc[2]), 2)
-)
+  Umbral_Superior = round(c(m_imc + 3 * s_imc, med_imc + 3 * mad_imc, q_imc[2] + 1.5 * diff(q_imc), p_imc[2]), 2))
 kable(tabla_outliers, caption = "Comparativa de métodos de detección de outliers y umbrales en IMC.")
 ```
 
@@ -343,26 +285,12 @@ aplica dispersión aleatoria con transparencia.
 ```{r grafico_outliers, fig.cap="Detección de outliers en IMC según cada método implementado", fig.width=6, fig.height=2.3, out.width="75%"}
 # Preparación de datos
 set.seed(123)
-
-df_plot_outliers <- heart_outliers %>%
-  select(IMC, starts_with("IMC_")) %>%
-  filter(!is.na(IMC)) %>%
-  slice_sample(n = 5000) %>%
-  pivot_longer(
-    cols = starts_with("IMC_"),
-    names_to = "Metodo",
-    values_to = "Es_Outlier"
-  )
-
+df_plot_outliers <- heart_outliers %>%select(IMC, starts_with("IMC_")) %>%
+  filter(!is.na(IMC)) %>%slice_sample(n = 5000) %>%pivot_longer(cols = starts_with("IMC_"),names_to = "Metodo",values_to = "Es_Outlier")
 # Gráfico de puntos con jitter
 ggplot(df_plot_outliers, aes(x = Metodo, y = IMC, color = !Es_Outlier)) +
   geom_point(position = "jitter", alpha = 0.4, size = 0.8) +
-  labs(
-    title = "Detección de Outliers en IMC por Método",
-    x = "Método de Detección",
-    y = "Índice de Masa Corporal (IMC)",
-    color = "No es Outlier"
-  )
+  labs(title = "Detección de Outliers en IMC por Método",x = "Método de Detección",y = "Índice de Masa Corporal (IMC)",color = "No es Outlier")
 ```
 
 El gráfico refleja de manera visual la sensibilidad de cada método.
@@ -395,15 +323,7 @@ mediante su mediana.
 ```{r imputacion_datos}
 # Imputación por Sexo (antropometría) y por Mediana (descanso y salud percibida)
 heart_data <- heart_data %>%
-  group_by(Sexo) %>%
-  mutate(
-    AlturaMetros   = coalesce(AlturaMetros, mean(AlturaMetros, na.rm = TRUE)),
-    PesoKilogramos = coalesce(PesoKilogramos, mean(PesoKilogramos, na.rm = TRUE)),
-    IMC            = coalesce(IMC, mean(IMC, na.rm = TRUE))
-  ) %>%
-  ungroup() %>%
-  mutate(across(c(HorasSueno, DiasMalaSaludFisica, DiasMalaSaludMental), ~ coalesce(.x, median(.x, na.rm = TRUE)))) %>%
-  drop_na()
+  group_by(Sexo) %>%mutate(AlturaMetros   = coalesce(AlturaMetros, mean(AlturaMetros, na.rm = TRUE)),PesoKilogramos = coalesce(PesoKilogramos, mean(PesoKilogramos, na.rm = TRUE)),IMC            = coalesce(IMC, mean(IMC, na.rm = TRUE))) %>%ungroup() %>%mutate(across(c(HorasSueno, DiasMalaSaludFisica, DiasMalaSaludMental), ~ coalesce(.x, median(.x, na.rm = TRUE)))) %>%drop_na()
 ```
 
 Tras el proceso de imputación de las variables cuantitativas y el
@@ -443,13 +363,10 @@ madm <- function(x) {
   1.4826 * median(abs(x - median(x, na.rm = TRUE)), na.rm = TRUE)}
 # Hago de nuevo la tabla por todas las imputaciones hechas
 estadisticos_num <- heart_data %>%select(where(is.numeric)) %>%
-  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor") %>%
-  group_by(Variable) %>%summarise(
-    Media = round(mean(Valor, na.rm = TRUE), 2),SD  = round(sd(Valor, na.rm = TRUE), 2),
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor") %>%group_by(Variable) %>%summarise(Media = round(mean(Valor, na.rm = TRUE), 2),SD  = round(sd(Valor, na.rm = TRUE), 2),
     Mediana = round(median(Valor, na.rm = TRUE), 2),
     MADM = round(madm(Valor), 2),IQR = round(IQR(Valor, na.rm = TRUE), 2),
     Sesgo = round(skewness(Valor), 2),Curtosis = round(kurtosis(Valor), 2))
-
 ```
 
 En esta tabla podemos ver la diferencia que hay entre medidas como la
@@ -468,23 +385,19 @@ p1 <- ggplot(heart_data, aes(x = IMC)) +
   geom_histogram(bins = 20, fill = "steelblue", color = "white", alpha = 0.8) +
   theme_minimal() +
   theme(axis.text = element_text(size = 8), axis.title = element_text(size = 9)) +labs(title = "A) IMC", x = "IMC", y = "Frecuencia")
-
 p2 <- ggplot(heart_data, aes(x = DiasMalaSaludMental)) +
   geom_histogram(bins = 15, fill = "coral2", color = "white", alpha = 0.8) +
   theme_minimal() +
   theme(axis.text = element_text(size = 8), axis.title = element_text(size = 9)) +labs(title = "B) Días Salud Mental", x = "Días", y = "Frecuencia")
-
 p3 <- ggplot(heart_data, aes(x = SaludGeneral)) +
   geom_bar(fill = "seagreen", alpha = 0.8) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 20, hjust = 1, size = 8), 
         axis.text.y = element_text(size = 8), axis.title = element_text(size = 9)) +labs(title = "C) Salud General", x = NULL, y = "Conteo")
-
 p4 <- ggplot(heart_data, aes(x = EnfermedadCardiaca)) +
   geom_bar(fill = "indianred", alpha = 0.8) +
   theme_minimal() +
   theme(axis.text = element_text(size = 8), axis.title = element_text(size = 9)) +labs(title = "D) Enf. Cardíaca", x = NULL, y = "Conteo")
-
 (p1 + p2) / (p3 + p4)
 ```
 
@@ -551,14 +464,11 @@ como mental.
 ```{r}
 kw1 <- kruskal.test(DiasMalaSaludFisica ~ SaludGeneral, data = heart_data)
 cat(sprintf("Kruskal (Salud Física ~ Salud General):, p-valor %s\n", format.pval(kw1$p.value, eps = 1e-16)))
-
 sp1 <- cor.test(as.numeric(heart_data$SaludGeneral), heart_data$DiasMalaSaludFisica, method = "spearman", exact = FALSE)
 cat(sprintf("Spearman (Salud General vs. Salud Física): $\\rho$ = %.4f \n", 
 sp1$estimate))
-
 kw2 <- kruskal.test(DiasMalaSaludMental ~ SaludGeneral, data = heart_data)
 cat(sprintf("Kruskal (Salud Mental ~ Salud General): p-valor %s\n", format.pval(kw2$p.value, eps = 1e-16)))
-
 sp2 <- cor.test(as.numeric(heart_data$SaludGeneral), heart_data$DiasMalaSaludMental, method = "spearman", exact = FALSE)
 cat(sprintf("Spearman (Salud General vs. Salud Mental): $\\rho$ = %.4f \n", 
 sp2$estimate))
@@ -706,31 +616,17 @@ riesgo.
 
 ```{r}
 #Cálculo de la prevalencia de cardiopatías por estado
-prevalencia_estado <- heart_data %>%
-  filter(!is.na(Estado)) %>%
-  group_by(Estado) %>%
-  summarise(
-    Total = n(),
-    Casos = sum(EnfermedadCardiaca == "Yes", na.rm = TRUE),
-    Prevalencia = (Casos / Total) * 100
-  ) %>%
+prevalencia_estado <- heart_data %>%filter(!is.na(Estado)) %>%group_by(Estado) %>%summarise(Total = n(),Casos = sum(EnfermedadCardiaca == "Yes", na.rm = TRUE),
+    Prevalencia = (Casos / Total) * 100) %>%
   mutate(region = tolower(as.character(Estado)))#Conversión del nombre del estado a minúsculas para cruzar con los polígonos del mapa
-
 #Carga de los datos de los estados de EE. UU.
 us_states <- map_data("state")
-
 #Unión de la prevalencia de cardiopatías con las coordenadas del mapa
 mapa_datos <- us_states %>% left_join(prevalencia_estado, by = "region")
-
 #Generación del mapa de los estados de eeuu coloreados según la prevalencia de cardipatías
 ggplot(mapa_datos, aes(x = long, y = lat, group = group, fill = Prevalencia)) +
   geom_polygon(color = "white", linewidth = 0.2) +
-  scale_fill_viridis_c(option = "magma", direction = -1, name = "% Prevalencia") +
-  theme_void() +
-  labs(
-    title = "Prevalencia de Enfermedades Cardiovasculares por Estado (EE. UU.)",
-    subtitle = "Porcentaje de diagnósticos positivos sobre el total de encuestados"
-  )
+  scale_fill_viridis_c(option = "magma", direction = -1, name = "% Prevalencia") +theme_void() +labs(title = "Prevalencia de Enfermedades Cardiovasculares por Estado (EE. UU.)",subtitle = "Porcentaje de diagnósticos positivos sobre el total de encuestados")
 ```
 
 El mapa refleja de forma clara que la presencia de cardiopatías no se
