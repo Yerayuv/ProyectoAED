@@ -30,6 +30,7 @@ conflictsofinterest: "Los autores declaran no tener conflicto de intereses."
 header-includes:
   - \usepackage{etoolbox}
   - \AtBeginEnvironment{Shaded}{\scriptsize}
+  - \newcounter{none}
 output: 
   rticles::mdpi_article:
     extra_dependencies: longtable
@@ -115,24 +116,16 @@ sociodemográficas y antecedentes clínicos.
 
 ## Diccionario de Variables
 
-Las 40 variables del estudio se estructuran en seis dimensiones
-clínicas: **1) Sociodemográficas:** `Estado`, `Sexo`, `GrupoEdad` (13
-tramos quinquenales) y `RazaEtnia`. **2) Antropométricas y salud
-física:** `AlturaMetros`, `PesoKilogramos`, `IMC` y percepción de salud
-(`SaludGeneral`, `DiasMalaSaludFisica`, `DiasMalaSaludMental`). **3)
-Hábitos de vida:** `HorasSueno`, `ActividadFisica`, `EstadoFumador`,
-`UsoCigarrilloElectronico` y `ConsumidorAlcohol`. **4) Patologías y
-comorbilidades:** `InfartoMiocardio`, `AnginaPecho`, `Ictus`,
-`Diabetes`, `Asma`, `EPOC`, `EnfermedadRenal`, `Artritis`, `CancerPiel`
-y `TrastornoDepresivo`. **5) Limitaciones funcionales:**
-`DientesExtraidos` y dificultades en la vida diaria
-(`DificultadAuditiva`, `Visual`, `Concentracion`, `Caminar`,
-`VestirseBanarse`, `TareasDiarias`). **6) Prevención y vacunas:**
-`UltimoChequeoMedico`, `TomografiaTorax`, `PruebaVIH`,
-`VacunaGripeUltimoAno`, `VacunaNeumococo`, `VacunaTetanos10Anos`,
-`ConductaAltoRiesgo` y `CovidPositivo`. Como variable objetivo derivada
-se define `EnfermedadCardiaca` (diagnóstico positivo en infarto o
-angina).
+Para estructurar el análisis, las 40 variables del estudio se clasifican en seis dominios clínicos fundamentales:
+
+- **Factores Sociodemográficos:** Estado de residencia (`Estado`), sexo biológico (`Sexo`), intervalo de edad en 13 tramos quinquenales (`GrupoEdad`) e identificación étnica (`RazaEtnia`).
+- **Antropometría y Salud Percibida:** Mediciones biométricas continuas (`AlturaMetros`, `PesoKilogramos`, `IMC`) y percepción subjetiva de salud (`SaludGeneral`, `DiasMalaSaludFisica`, `DiasMalaSaludMental`).
+- **Hábitos de Vida:** Horas de descanso (`HorasSueno`), práctica de ejercicio (`ActividadFisica`), consumo de alcohol (`ConsumidorAlcohol`) y consumo de nicotina (`EstadoFumador`, `UsoCigarrilloElectronico`).
+- **Patologías y Comorbilidades:** Diagnósticos médicos de afección vascular y crónica (`InfartoMiocardio`, `AnginaPecho`, `Ictus`, `Diabetes`, `EPOC`, `Asma`, `EnfermedadRenal`, `Artritis`, `CancerPiel`, `TrastornoDepresivo`).
+- **Limitaciones Funcionales:** Piezas dentales extraídas (`DientesExtraidos`) y limitaciones en la vida diaria (`DificultadAuditiva`, `Visual`, `Concentracion`, `Caminar`, `VestirseBanarse`, `TareasDiarias`).
+- **Atención Preventiva:** Tiempo desde la última revisión (`UltimoChequeoMedico`), pruebas diagnósticas (`TomografiaTorax`, `PruebaVIH`), antecedentes de `CovidPositivo` e inmunizaciones (`VacunaGripeUltimoAno`, `VacunaNeumococo`, `VacunaTetanos10Anos`).
+
+A partir de estos registros se formula la variable objetivo principal **`EnfermedadCardiaca`**, definida como respuesta afirmativa ante infarto de miocardio o angina de pecho.
 
 ## Ingesta y Tipado de Variables
 
@@ -140,7 +133,7 @@ La importación se realiza de forma reproducible a partir del archivo
 comprimido mediante la librería readr. Posteriormente, se convierten las
 variables cualitativas a factores nominales y ordinales, y se define la
 variable objetivo EnfermedadCardiaca (definida como presencia de infarto
-de miocardio HadHeartAttack o angina de pecho HadAngina).
+de miocardio o angina de pecho).
 
 ```{r carga_y_tipado}
 # Carga reproducible
@@ -205,105 +198,57 @@ A continuación se cuantifica el volumen de valores perdidos presentes en
 las variables y se evalúa la proporción de casos completos.
 
 ```{r valores_perdidos}
-# Cálculo de NAs por columna
+# Cálculo de NAs por columna y completitud global
 nas_columna <- colSums(is.na(heart_data))
 pct_nas <- round((nas_columna / nrow(heart_data)) * 100, 2)
-# Tabla maquetada con las 5 variables de mayor volumen de NAs
-tabla_nas <- tibble(Variable = names(nas_columna),Num_NAs = nas_columna,
-  Porcentaje = paste(pct_nas, " %")) %>%filter(Num_NAs > 0) %>%arrange(desc(Num_NAs))
-kable(head(tabla_nas, 5), caption = "Variables con mayor proporción de valores perdidos.")
+num_completas <- sum(complete.cases(heart_data))
 ```
 
-El análisis de casos completos revela que 277.447 observaciones (el
-62.33% del total) carecen de valores perdidos en la totalidad de sus
-campos. Descartar las filas incompletas mediante un filtrado global
-supondría desechar casi un 38% de la muestra (asociado a preguntas
-optativas de inmunización o chequeos). Por tanto, se conservan las
-observaciones para el análisis general y se aplican procedimientos de
-imputación en las variables clave.
+El análisis de valores perdidos indica que las mayores ausencias se concentran 
+en datos clínicos preventivos optativos: vacuna del tétanos (18.54%), 
+vacuna antineumocócica (17.31%), prueba de VIH (14.86%), tomografía de tórax 
+(12.59%) y diagnóstico de COVID-19 (11.40%). Un total de 277.447 observaciones 
+(el 62.33%) cuentan con registros completos. Descartar filas incompletas en esta
+fase supondría perder casi un 38% de la muestra, por lo que se conservan y se 
+procederá a la imputación más adelante.
 
 ## Detección Univariante de Outliers y Comparativa de Métodos
 
-A continuación se aplican y comparan cuatro métodos de detección de
-outliers sobre el IMC (Índice de Masa Corporal): regla 3 sigma,
-identificador Hampel, regla del boxplot y percentiles (5% y 95%).
-
-Para cada método se evalúa tanto el número de anomalías detectadas como
-los umbrales que definen los valores típicos para decidir como tratar a
-los valores extremos.
+A continuación se aplican y comparan cuatro métodos de detección de outliers 
+sobre el IMC (Índice de Masa Corporal): regla 3 sigma, identificador Hampel, 
+regla del boxplot y percentiles (5% y 95%).
 
 ```{r deteccion_outliers}
-# Definición de reglas univariantes
-reglasigma     <- function(x) abs(x - mean(x, na.rm = TRUE)) > 3 * sd(x, na.rm = TRUE)
-reglahampel    <- function(x) abs(x - median(x, na.rm = TRUE)) > 3 * (1.4826 * median(abs(x - median(x, na.rm = TRUE)), na.rm = TRUE))
-reglaboxplot   <- function(x) { q <- quantile(x, c(0.25, 0.75), na.rm = TRUE); x < q[1] - 1.5 * diff(q) | x > q[2] + 1.5 * diff(q) }
-reglapercentil <- function(x) { p <- quantile(x, c(0.05, 0.95), na.rm = TRUE); x < p[1] | x > p[2] }
+# Definición de reglas
+reglasigma   <- function(x) abs(x - mean(x, na.rm = TRUE)) > 3 * sd(x, na.rm = TRUE)
+reglahampel  <- function(x) {
+  m <- median(x, na.rm = TRUE); abs(x - m) > 3 * (1.4826 * median(abs(x - m), na.rm = TRUE))
+}
+reglaboxplot <- function(x) {
+  q <- quantile(x, c(0.25, 0.75), na.rm = TRUE); x < q[1] - 1.5 * diff(q) | x > q[2] + 1.5 * diff(q)
+}
+reglapercentil <- function(x) {
+  p <- quantile(x, c(0.05, 0.95), na.rm = TRUE); x < p[1] | x > p[2]
+}
+
 # Clasificación de outliers sobre IMC
 heart_outliers <- heart_data %>%
-  mutate(IMC_Sigma = reglasigma(IMC), IMC_Hampel = reglahampel(IMC),
-         IMC_Boxplot = reglaboxplot(IMC), IMC_Percentil = reglapercentil(IMC))
-# Umbrales y comparativa de métodos
-m_imc <- mean(heart_data$IMC, na.rm = TRUE); s_imc <- sd(heart_data$IMC, na.rm = TRUE)
-med_imc <- median(heart_data$IMC, na.rm = TRUE); mad_imc <- 1.4826 * median(abs(heart_data$IMC - med_imc), na.rm = TRUE)
-q_imc <- quantile(heart_data$IMC, c(0.25, 0.75), na.rm = TRUE); p_imc <- quantile(heart_data$IMC, c(0.05, 0.95), na.rm = TRUE)
-tabla_outliers <- tibble(
-  Método = c("Regla 3 Sigma", "Identificador Hampel", "Regla Boxplot", "Percentiles (5% - 95%)"),
-  Outliers_Detectados = c(sum(heart_outliers$IMC_Sigma, na.rm = TRUE), sum(heart_outliers$IMC_Hampel, na.rm = TRUE),sum(heart_outliers$IMC_Boxplot, na.rm = TRUE), sum(heart_outliers$IMC_Percentil, na.rm = TRUE)),Porcentaje = paste(round(c(mean(heart_outliers$IMC_Sigma, na.rm = TRUE), mean(heart_outliers$IMC_Hampel, na.rm = TRUE),mean(heart_outliers$IMC_Boxplot, na.rm = TRUE), mean(heart_outliers$IMC_Percentil, na.rm = TRUE)) * 100, 2), "%"),
-  Umbral_Inferior = round(c(m_imc - 3 * s_imc, med_imc - 3 * mad_imc, q_imc[1] - 1.5 * diff(q_imc), p_imc[1]), 2),
-  Umbral_Superior = round(c(m_imc + 3 * s_imc, med_imc + 3 * mad_imc, q_imc[2] + 1.5 * diff(q_imc), p_imc[2]), 2))
-kable(tabla_outliers, caption = "Comparativa de métodos de detección de outliers y umbrales en IMC.")
+  mutate(
+    IMC_Sigma = reglasigma(IMC), IMC_Hampel = reglahampel(IMC),
+    IMC_Boxplot = reglaboxplot(IMC), IMC_Percentil = reglapercentil(IMC)
+  )
 ```
 
-**La regla 3 Sigma es poco agresiva:** fija el umbral superior en 48.21,
-detectando solo un 1.28% de outliers debido a que la propia desviación
-típica se expande por la presencia de casos extremos. **El identificador
-Hampel es más agresivo:** al basarse en el MADM, sitúa el umbral
-superior en 44.03, identificando un 2.69% de anomalías. **La regla del
-Boxplot:** con un umbral superior de 43.33 y detectando un 3.11% de
-valores fuera de los bigotes. Esto pasa porque justo la variable IMC no
-es simétrica si no con una cola a la derecha. **Percentiles:** corta de
-forma fija el 10% de la muestra, con independencia de la distribución.
-
-**Tratamiento de los outliers identificados:** Estos valores de IMC no
-representan errores de medición o transcripción (ya fueron filtrados
-antes), sino observaciones biológicamente reales correspondientes a
-pacientes con obesidad mórbida (grado III). Por tanto, no se eliminan
-del conjunto de datos, sino que se conservan para ser analizados
-mediante procedimientos y estadísticos en los siguientes bloques.
-
-## Representación Gráfica de Outliers por Método
-
-Se representan gráficamente los valores de IMC frente a los métodos de
-detección empleados, mostrando los datos catalogados como típicos y los
-catalogados como outliers en distinto color.
-
-Para evitar problemas de saturación visual en el gráfico debido al
-volumen de más de 400.000 observaciones, se utiliza una muestra
-aleatoria representativa de 5.000 observaciones con set.seed(123) y se
-aplica dispersión aleatoria con transparencia.
-
-```{r grafico_outliers, fig.cap="Detección de outliers en IMC según cada método implementado", fig.width=6, fig.height=2.3, out.width="75%"}
-# Preparación de datos
-set.seed(123)
-df_plot_outliers <- heart_outliers %>%select(IMC, starts_with("IMC_")) %>%
-  filter(!is.na(IMC)) %>%slice_sample(n = 5000) %>%pivot_longer(cols = starts_with("IMC_"),names_to = "Metodo",values_to = "Es_Outlier")
-# Gráfico de puntos con jitter
-ggplot(df_plot_outliers, aes(x = Metodo, y = IMC, color = !Es_Outlier)) +
-  geom_point(position = "jitter", alpha = 0.4, size = 0.8) +
-  labs(title = "Detección de Outliers en IMC por Método",x = "Método de Detección",y = "Índice de Masa Corporal (IMC)",color = "No es Outlier")
-```
-
-El gráfico refleja de manera visual la sensibilidad de cada método.
-
-**Continuidad de los datos:** Se observa que los valores superiores no
-son puntos aislados ni errores tipográficos, sino una nube continua que
-se extiende hasta valores extremos, confirmando que se trata de
-individuos con obesidad severa real que deben conservarse en la muestra.
-
--   **Comparativa de cortes:** La regla 3 Sigma deja una franja alta de
-    puntos clasificados como normales (debido a la varianza inflada),
-    mientras que la regla del Boxplot y el identificador Hampel capturan
-    de forma equilibrada la masa de valores atípicos.
+La comparativa de métodos refleja la asimetría del IMC. La regla 3 
+Sigma resulta poco agresiva: sitúa el umbral superior en 48.19 y detecta solo 
+un 1.28% de anomalías (5.071 casos), al verse inflada la desviación típica por 
+valores extremos. El identificador Hampel fija el corte en 44.03 
+(2.69% de outliers, 10.657 casos), mientras que la regla del Boxplot lo sitúa 
+en 43.18 (3.11% de anomalías, 12.339 casos). El método de percentiles (5%–95%) 
+acota el rango entre 20.12 y 40.69 (38.840 casos, 9.80%). Estos 
+registros representan individuos con obesidad mórbida real (grado III) 
+y no errores de encuesta, por lo que se conservan en la muestra para no perder
+información.
 
 ## Imputación de Variables Numéricas
 
